@@ -1,30 +1,54 @@
-fit_ct <- function(formula, data, type = "poisson") {
+fit_ct <- function(formula, data, family = "poisson") {
   
-  if (type == "poisson") {
+  if (family == "poisson") {
     model <- glm(formula, data = data, family = poisson())
     
-  } else if (type == "qpoisson") {
+  } else if (family == "qpoisson") {
     model <- glm(formula, data = data, family = quasipoisson())
     
-  } else if (type == "negbin") {
+  } else if (family == "negbin") {
     model <- MASS::glm.nb(formula, data = data)
     
-  } else if (type == "zip") {
+  } else if (family == "zip") {
     model <- pscl::zeroinfl(formula, data = data, dist = "poisson")
     
-  } else if (type == "zinb") {
+  } else if (family == "zinb") {
     model <- pscl::zeroinfl(formula, data = data, dist = "negbin")
     
   } else {
     stop("Invalid model type")
   }
   
-  perf <- performance::model_performance(model)
+  model$ct_family = family
   
-  
-  return(list(
-    model = model,
-    summary = summary(model),
-    performance = perf # aic for now. but we can return. model performance instead
-  ))
+  return(model)
 }
+
+
+
+
+# # Poisson
+# data(mpg, package = "ggplot2")
+# 
+# 
+# 
+# # Poisson
+# fit_ct(cyl ~ displ, mpg, family  = "poisson")
+# 
+# 
+# # Quasai Poisson
+# fit_ct(cyl ~ displ, mpg, family  = "qpoisson")
+# 
+# # Negative Binomial
+# fit_ct(cyl ~ displ, mpg, family  = "negbin")
+# 
+# 
+# # Zero Inflation Poisson
+# mpg_zip <- mpg 
+# zero_idx <- sample(1:nrow(mpg_zip), size = 30)  # inject 5 zeros to the data
+# mpg_zip$cyl[zero_idx] <- 0
+# fit_ct(cyl ~ displ, mpg_zip, family  = "zip")
+# 
+# # Zero Inflation Negative Binomial
+# 
+# fit_ct(cyl ~ displ, mpg_zip, family  = "zinb")

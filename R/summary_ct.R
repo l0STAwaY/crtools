@@ -49,7 +49,7 @@ summary_ct <- function(data, response, group = NA, na.rm = TRUE){
       zero_prop = mean(data[[response]] == 0, na.rm = na.rm),
       variance = var(data[[response]], na.rm = na.rm),
       Var_to_Mean = mean(data[[response]], na.rm = na.rm) /
-        var(data[[response]], na.rm = na.rm)
+        var(data[[response]], na.rm = na.rm) # This is less meaningful Directly unless all x equal but somewhat useful
     )
     
     return(summary_data)

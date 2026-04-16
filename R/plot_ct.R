@@ -61,6 +61,8 @@ plot_ct <- function(data, response, group = NA, type = "barplot"){
     
     if (is.na(group)) {
       
+      # recommend count 10 
+      
       if (type == "boxplot") {
         # add jitter becuase technically 
         p <- ggplot(data, aes(y = .data[[response]])) +
