@@ -26,6 +26,11 @@ diag_count <- function(model, B = 100){
     error = function(e) NULL
   )
   
+  # emmean dissect
+  # dissect the interaction for them
+  
+  # lrtest or voungtest for model comparison
+  
   # ---------------------------
   # 4. Output
   # ---------------------------
@@ -35,6 +40,8 @@ diag_count <- function(model, B = 100){
     bootstrap_raw = boot$raw,
     model_ci = ci_model
   ))
+  
+  
 }
 
 

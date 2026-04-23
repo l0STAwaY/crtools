@@ -182,6 +182,9 @@ chk_count <- function(model){
 }
 
 
+# check this
+
+
 
 
 
