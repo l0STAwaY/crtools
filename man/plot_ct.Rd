@@ -19,9 +19,6 @@ plot_ct(data, response, group = NA, type = "barplot")
 returns a plot, specifically a ggplot2::ggplot object
 }
 \description{
-Count Response Plotting
-}
-\details{
 For plots since count is non-continuous the bar plot makes the most sense
 However, for Box plot and violin plots For count data (which is discrete), the density estimate can be misleading or look odd,
 it will be more natural if we have a greater range of different discrete values and odd if we have  few unique values.
@@ -54,7 +51,6 @@ p4
  # Count bar plot
 p5 <- plot_ct(mpg, "cyl", type = "barplot")
 p5
-
 
 
 

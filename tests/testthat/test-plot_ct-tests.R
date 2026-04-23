@@ -15,6 +15,7 @@ test_that("boxplot without group returns correct ggplot class", {
 
 test_that("boxplot with group returns correct ggplot class", {
   
+  
   data(mpg, package = "ggplot2")
   
   p2 <- plot_ct(mpg, "cyl", group = "class", type = "boxplot")

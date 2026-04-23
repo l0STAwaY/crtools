@@ -4,7 +4,7 @@
 \alias{summary_ct}
 \title{Count Response Summaries}
 \usage{
-summary_ct(data, response, group = NA, na.rm = TRUE, plot = FALSE)
+summary_ct(data, response, group = NA, na.rm = TRUE)
 }
 \arguments{
 \item{data}{A data frame}
@@ -12,6 +12,8 @@ summary_ct(data, response, group = NA, na.rm = TRUE, plot = FALSE)
 \item{response}{A string corresponding to the name of the response variable}
 
 \item{group}{group Optional string corresponding to grouping variable (default NA)}
+
+\item{na.rm}{removing NA when calculating summaries takes on (TRUE/FALSE)}
 }
 \value{
 A tibble of summary statistics
