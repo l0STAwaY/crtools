@@ -1,6 +1,122 @@
 library(car)
 library(glue)
 library(DHARMa)
+chk_count <- function(model){
+  
+   model_type <- model$family
+   chk_table <- tibble(
+     Enough_Response_Count = NULL,
+     Enough_Zero_Count = NULL,
+     Enough_NonZero_Count= NULL,
+     MultiColiner_Issue = NULL,
+     Dispersion_Ratio = NULL
+   )
+   
+   
+   if(model$ct_family %in% c("poisson","qpoisson","negbin")){
+     
+     # Condition 2, little to no multi-colinearity
+     
+     if(length(coef(model))<=2){
+       message("no vif reported: model contains fewer than 2 terms" )
+     }
+     else{
+       cat(vif_report(model))
+     }
+     
+
+
+     # Condition 3 Enough count 
+     mod_dta <- model$data
+     y_ct <- mean(model$model[[1]])
+     Threshold <- 10 * length(coef(model))
+     if(y_ct>=Threshold){
+       message(" Total event counts is at least 10-20 events predictor variable")
+       
+     }
+     else{
+       warning(" Total event counts is not at least 10-20 events predictor variable")
+     }
+     
+     
+     # Test Zero Inflation
+     testZeroInflation(model)
+     }
+     
+   
+   else if(model$ct_family %in% c("zip","zinb")){
+     
+    
+     # Condition 1, little to no Multi-Colinearity
+     
+     if(length(model$coefficients$count)<=2){
+       message("no vif reported model contains fewer than 2 terms" )
+    
+     }
+     else{
+       if(model$ct_family=="zip"){
+         cat(vif_report(model))
+         # car::vif(fit_ct(model$formula,model$model,family= "poisson"))
+       }
+       else if((model$ct_family=="zinb")){
+         cat(vif_report(model))
+         # car::vif(fit_ct(model$formula,model$model,family= "zinb"))
+       }
+     }
+
+
+     
+     # Condition 2 Enough count for predictor
+     mod_dta <- model$data
+     y_ct <- mean(model$model[[1]])
+     Threshold_count <- 10 * length(model$coefficients$count)
+ 
+    
+
+     if(y_ct>=Threshold_count){
+       message(glue("Total event counts {y_ct} is at least 10 events predictor variable"))
+     }
+     else{
+       warning(" Total event counts is not at least 10 events predictor variable")
+     }
+     
+
+     
+     
+     # Condition 3 Enough 0
+     mod_dta <- model$data
+     zero_ct <- sum(model$model[[1]]==0)
+     non_zero_ct <- sum(model$model[[1]]!=0)
+     Threshold_zero <- 10 * length(model$coefficients$zero)
+
+     if(zero_ct>=Threshold_zero){
+       message(glue(" Total zero event counts {zero_ct} is at least 10 events predictor variable"))
+       
+     }
+     if(non_zero_ct>=Threshold_zero){
+       message(glue(" Total nonzero event counts {non_zero_ct} is at least 10 events predictor variable"))
+       
+     }
+     if(zero_ct<Threshold_zero){
+       warning(glue("Total zero event counts {zero_ct} is not at least 10 events predictor variable"))
+       
+     }
+     if(non_zero_ct<Threshold_zero){
+       warning(glue("Total nonzero event counts {non_zero_ct} is not at least 10 events predictor variable"))
+     }
+   }
+   
+   # randomize quantile residual plot
+    print(plt_rdr(model))
+    
+    # pearson residual plot
+    print(plt_pearson(model))
+
+}
+
+
+
+
 plt_rdr <- function(model){
   # from poisson
   counts <- model$y
@@ -70,116 +186,35 @@ plt_pearson <- function(model){
 
 
 
-chk_count <- function(model){
+vif_report <- function(model) {
   
-   model_type <- model$family
-   chk_table <- tibble(
-     Enough_Response_Count = NULL,
-     Enough_Zero_Count = NULL,
-     Enough_NonZero_Count= NULL,
-     MultiColiner_Issue = NULL,
-     Dispersion_Ratio = NULL
-   )
-   
-   
-   if(model$ct_family %in% c("poisson","qpoisson","negbin")){
-     
-     # Condition 2, little to no multi-colinearity
-     
-     if(length(coef(model))<=2){
-       message("no vif reported: model contains fewer than 2 terms" )
-     }
-     else{
-       vif(model)
-     }
-
-
-
-     # Condition 3 Enough count 
-     mod_dta <- model$data
-     y_ct <- mean(model$model[[1]])
-     Threshold <- 10 * length(coef(model))
-     if(y_ct>=Threshold){
-       message(" Total event counts is at least 10-20 events predictor variable")
-       
-     }
-     else{
-       warning(" Total event counts is not at least 10-20 events predictor variable")
-     }
-     
-     
-     # Test Zero Inflation
-     testZeroInflation(model)
-     }
-     
-   
-   else if(model$ct_family %in% c("zip","zinb")){
-     
+  VIF <- vif(model)
+  vartext2 <- ""
+  
+  if (any(VIF > 5)) {
     
-     # Condition 1, little to no Multi-Colinearity
-     
-     if(length(model$coefficients$count)<=2){
-       message("no vif reported model contains fewer than 2 terms" )
+    vartext2 <- "We calculated the Variance Inflation Factor (VIF) to assess collinearity of the model -- "
+    viftext <- paste("VIF(", names(VIF), ")=", round(VIF, 2), sep = "")
     
-     }
-     else{
-       if(model$ct_family=="zip"){
-         car::vif(fit_ct(model$formula,model$model,family= "poisson"))
-       }
-       else if((model$ct_family=="zinb")){
-         car::vif(fit_ct(model$formula,model$model,family= "zinb"))
-       }
-     }
-
-
-     
-     # Condition 2 Enough count for predictor
-     mod_dta <- model$data
-     y_ct <- mean(model$model[[1]])
-     Threshold_count <- 10 * length(model$coefficients$count)
- 
+    if (sum(VIF > 5) == 1) {
+      vartext2<-paste(vartext2, viftext, " has high VIF, indicating that collinearity may be an issue. You might consider standardizing your data or using a regularization method like ridge regression or LASSO.")
+    } else {
+      
+      viftext <- paste(paste(viftext[-length(viftext)], collapse = ", ")," and ",viftext[length(viftext)],sep = "")
+      vartext2<-paste(vartext2, viftext, " have high VIF, indicating that collinearity may be an issue. You might consider standardizing your data or using a regularization method like ridge regression or LASSO.")
+    }
     
-
-     if(y_ct>=Threshold_count){
-       message(glue("Total event counts {y_ct} is at least 10 events predictor variable"))
-     }
-     else{
-       warning(" Total event counts is not at least 10 events predictor variable")
-     }
-     
-
-     
-     
-     # Condition 3 Enough 0
-     mod_dta <- model$data
-     zero_ct <- sum(model$model[[1]]==0)
-     non_zero_ct <- sum(model$model[[1]]!=0)
-     Threshold_zero <- 10 * length(model$coefficients$zero)
-
-     if(zero_ct>=Threshold_zero){
-       message(glue(" Total zero event counts {zero_ct} is at least 10 events predictor variable"))
-       
-     }
-     if(non_zero_ct>=Threshold_zero){
-       message(glue(" Total nonzero event counts {non_zero_ct} is at least 10 events predictor variable"))
-       
-     }
-     if(zero_ct<Threshold_zero){
-       warning(glue("Total zero event counts {zero_ct} is not at least 10 events predictor variable"))
-       
-     }
-     if(non_zero_ct<Threshold_zero){
-       warning(glue("Total nonzero event counts {non_zero_ct} is not at least 10 events predictor variable"))
-     }
-   }
-   
-   # randomize quantile residual plot
-    print(plt_rdr(model))
-    
-    # pearson residual plot
-    print(plt_pearson(model))
-
+  } else {
+    vartext2<-paste(vartext2, "We calculated the Variance Inflation Factor (VIF) to assess collinearity of the model. None of the calculated VIFs were larger than five, indicating that collinearity may not be an issue.", sep="")
+  }
+  
+  return(vartext2)
 }
+
+
+
+
+
 
 
 # check this

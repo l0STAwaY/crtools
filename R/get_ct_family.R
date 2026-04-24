@@ -112,7 +112,7 @@ get_ct_family <- function(model) {
 # 
 # # Zero-Inflated NegBin
 # m_zinb <- pscl::zeroinfl(y_zi ~ x | 1, data = df, dist = "negbin")
-?model.frame
-str(m_zip)
-
-model.frame(m_zip)
+# ?model.frame
+# str(m_zip)
+# 
+# model.frame(m_zip)

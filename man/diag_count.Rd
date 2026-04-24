@@ -2,13 +2,18 @@
 % Please edit documentation in R/diag_count.R
 \name{diag_count}
 \alias{diag_count}
-\title{Title}
+\title{Model Diagnostics for Count Models}
 \usage{
 diag_count(model, B = 100)
 }
 \arguments{
-\item{model}{}
+\item{model}{A fitted count model object (from fit_ct)}
+
+\item{B}{Number of bootstrap replications}
+}
+\value{
+A list with performance metrics, bootstrap CI, raw bootstrap draws, and model-based CI
 }
 \description{
-Title
+Model Diagnostics for Count Models
 }

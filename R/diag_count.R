@@ -1,50 +1,70 @@
-#' Title
+#' Model Diagnostics for Count Models
 #'
-#' @param model 
+#' @param model A fitted count model object (from fit_ct)
+#' @param B Number of bootstrap replications
 #'
-#' @returns
+#' @returns A list with performance metrics, bootstrap CI, raw bootstrap draws, and model-based CI
 #' @import performance
 #' @export
-#' 
-#'
-#' @examples
 diag_count <- function(model, B = 100){
   
-  # the AIC BIC and etc
   perf <- performance::model_performance(model)
   
-
   
-  # boot confidence interval for the specific models
-  boot <- bootstrap_count_model(model, B = B)
+  boot <- bootstrap_ct_model(model, B = B)
   
-  # ---------------------------
-  # 3. Confidence intervals (model-based)
-  # ---------------------------
+  
+  
+  # confint confidence interval of the coeffice
   ci_model <- tryCatch(
     confint(model),
-    error = function(e) NULL
+    error = function(e) {
+      warning("confint(model) failed: ", e$message)
+      NULL
+    }
   )
   
-  # emmean dissect
-  # dissect the interaction for them
+  # this just prints everything autmatically
+  # we might not want to print since it messes with select_ct output
+  # print(perf)
+  # 
+  # if (!is.null(boot)) {
+  #   print(boot$ci)
+  # }
+  # 
+  # if (!is.null(ci_model)) {
+  #   print(ci_model)
+  # }
+  # 
   
-  # lrtest or voungtest for model comparison
-  
-  # ---------------------------
-  # 4. Output
-  # ---------------------------
-  return(list(
-    performance = perf,
-    bootstrap_ci = boot$ci,
-    bootstrap_raw = boot$raw,
-    model_ci = ci_model
-  ))
-  
-  
+  # I'm thinking about returning an object as well as returning them
+  list(
+    performance   = perf,
+    bootstrap_ci  = if (!is.null(boot)) boot$ci else NULL,
+    bootstrap_raw = if (!is.null(boot)) boot$raw else NULL,
+    model_ci      = ci_model
+  )
 }
 
 
 
+# data <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
+# 
+# 
+# model <- fit_ct(
+#   Kills ~ Age + offset(TripDays),
+#   data = data,
+#   family = "zip"
+# )
+# 
+# str(performance::model_performance(model))
+# 
+# res <- diag_count(model, B = 200)
+# 
+# 
+# # print(res$performance)
+# # head(res$bootstrap_raw)
+# # print(res$bootstrap_ci)
+# # print(res$model_ci)
 
 

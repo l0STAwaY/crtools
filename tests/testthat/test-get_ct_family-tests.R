@@ -1,3 +1,4 @@
+# I didn't use real data here since it felt unessesary when we simply testing the return family type
 test_that("get_ct_family returns correct ct family when fitting using normal model", {
   
   library(pscl)
@@ -7,8 +8,7 @@ test_that("get_ct_family returns correct ct family when fitting using normal mod
   n <- 100
   df <- data.frame(
     x = rnorm(n),
-    y = rpois(n, lambda = 2)
-  )
+    y = rpois(n, lambda = 2))
   
 # pois
 m_pois <- glm(y ~ x, data = df, family = poisson())
@@ -39,9 +39,10 @@ library(MASS)
 
 
 set.seed(123)
+n <- 100
 df <- data.frame(
-  x = rnorm(100),
-  y = rpois(100, lambda = 2)
+  x = rnorm(n),
+  y = rpois(n, lambda = 2))
 
 # pois
 m_pois <- fit_ct(y ~ x, data = df, family = "poisson")
