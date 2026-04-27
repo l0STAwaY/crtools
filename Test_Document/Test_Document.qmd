@@ -1,0 +1,302 @@
+---
+title: crtools_Test          # Title of the document
+
+
+execute:
+  warning: false
+  message: false
+
+# Below will do html by default. To render the entire project
+# Use the following code:
+# quarto::quarto_render("HW2WriteUp.qmd")
+format:
+  html: 
+    number-sections: TRUE
+    code-fold: TRUE
+    code-line-numbers: TRUE
+    cap-location: top 
+  pdf:
+    documentclass: article
+    number-sections: TRUE
+    reference-section-title: "References" 
+    code-fold: TRUE
+    code-line-numbers: TRUE
+    cap-location: top 
+    include-in-header:
+      - text: |
+          \usepackage{amsmath}
+          \usepackage[dvipsnames]{xcolor}
+          \usepackage[shortlabels]{enumitem}
+          \usepackage{parskip}
+          \usepackage{hyperref}
+          \usepackage{geometry}
+          \usepackage{float}
+    geometry:
+      - top=0.75in
+      - left=0.75in
+      - bottom=0.75in
+      - right=0.75in
+format-links: [pdf]
+---
+
+
+# Loading File and showcasing ggmeansplot.R
+```{r}
+source("/Users/apple/Documents/GitHub/crtools/bootstrap_ct_model.R")
+source("correlation_summary.R")
+source("diag_ct.R")
+source("fit_ct.R")
+source("get_ct_family.R")
+source("ggmeansplot.R")
+source("interp_ct.R")
+source("make_ggpairs_plot.R")
+source("plot_ct.R")
+source("refactor_data.R")
+source("select_ct.R")
+source("summary_ct.R")
+source("summary_overall.R")
+
+library(ggplot2)
+library(ggeffects)
+library(emmeans)
+library(pscl)
+data(mtcars)
+set.seed(113)
+
+# we can also use the count dataset
+# data <- read.csv("../Dataset/McMillanAcheMonkeyTrips.csv")
+
+# I used mtcars since and made artifical data instead
+data <- mtcars
+data$vs <- as.factor(data$vs)
+data$am <- as.factor(mtcars$am)
+
+# make a proper count outcome
+data$y <- rpois(nrow(data), lambda = exp(scale(data$hp)))
+data$exposure <- data$hp + 1
+# add zero inflation
+zero_idx <- sample(1:nrow(data), size = 5)
+data$y[zero_idx] <- 0
+
+
+#===========================
+# cont x categorical poisson
+#===========================
+
+
+
+m1 <- fit_ct(y ~ hp * vs, data = data, family = "poisson")
+ggemmeansplot(m1, pred = "hp", moderator = "vs")
+emmeans(m1, ~ hp | vs, type = "response") # check if ggemeansplot give information on response scale
+ggemmeansplot(m1, pred = "vs", moderator = "hp")
+
+m2 <-  fit_ct(y ~ hp * vs, data = data, family = "negbin")
+ggemmeansplot(m2, pred = "hp", moderator = "vs")
+
+
+
+m3 <-  fit_ct(y ~ hp * vs, data = data, family = "qpoisson")
+ggemmeansplot(m3, pred = "hp", moderator = "vs")
+
+
+m4 <-  fit_ct(y ~ hp * vs, data = data, family = "zip")
+ggemmeansplot(m4, pred = "hp", moderator = "vs")
+
+
+m5 <-  fit_ct(y ~ hp * vs, data = data, family = "zinb")
+ggemmeansplot(m5, pred = "hp", moderator = "vs")
+
+ggemmeansplot(m5, pred = "vs", moderator = "hp")
+
+
+
+# with offset one from each should be enough
+m1_off <- fit_ct(
+  y ~ hp * vs + offset(log(exposure)),
+  data = data,
+  family = "poisson"
+)
+ggemmeansplot(m1_off, pred = "hp", moderator = "vs")
+
+
+m5_off <- fit_ct(
+  y ~ hp * vs + offset(log(exposure)),
+  data = data,
+  family = "zinb"
+)
+ggemmeansplot(m5_off, pred = "hp", moderator = "vs")
+
+
+
+# categorical x categorical
+
+m6 <- fit_ct(y ~ vs * am, data = data, family = "poisson")
+ggemmeansplot(m6, pred = "vs", moderator = "am")
+
+m7 <- fit_ct(y ~ vs * am, data = data, family = "negbin")
+ggemmeansplot(m7, pred = "vs", moderator = "am")
+
+m8 <- fit_ct(y ~ vs * am, data = data, family = "qpoisson")
+ggemmeansplot(m8, pred = "vs", moderator = "am")
+  
+  
+m9 <-  fit_ct(y ~ vs * am, data = data, family = "zip")
+ggemmeansplot(m9, pred = "vs", moderator = "am")
+
+# I forgot the zinb case
+m15 <- fit_ct(y ~ vs * am, data = data, family = "zinb")
+ggemmeansplot(m15, pred = "vs", moderator = "am")
+
+
+
+m6_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data = data, family = "poisson")
+ggemmeansplot(m6_off, pred = "vs", moderator = "am")
+
+
+
+# cont vs cont
+
+m10 <- fit_ct(y ~ hp * mpg, data = data, family = "poisson")
+ggemmeansplot(m10, pred = "hp", moderator = "mpg")
+
+m11 <- fit_ct(y ~ hp * mpg, data = data, family = "negbin")
+ggemmeansplot(m11, pred = "hp", moderator = "mpg")
+
+m12 <- fit_ct(y ~ hp * mpg, data = data, family = "qpoisson")
+ggemmeansplot(m12, pred = "hp", moderator = "mpg")
+
+m13 <- fit_ct(y ~ hp * mpg, data = data, family = "zip")
+ggemmeansplot(m13, pred = "hp", moderator = "mpg")
+
+m14 <- fit_ct(y ~ hp * mpg, data = data, family = "zinb")
+ggemmeansplot(m14, pred = "hp", moderator = "mpg")
+
+
+
+m10_off <- fit_ct(
+  y ~ hp * mpg + offset(log(exposure)),
+  data = data,
+  family = "poisson"
+)
+ggemmeansplot(m10_off, pred = "hp", moderator = "mpg")
+
+m14_off <- fit_ct(
+  y ~ hp * mpg + offset(log(exposure)),
+  data = data,
+  family = "zinb"
+)
+ggemmeansplot(m14_off, pred = "hp", moderator = "mpg")
+
+```
+
+
+# Testing Emmean Text function
+
+```{r}
+
+
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- as.factor(mtcars$am)
+
+
+em1 <- emmeans(m6, ~ vs | am,type="response")
+mod.emmeans1 <- as.data.frame(em1)
+
+em2 <- emmeans(m14_off, ~ vs | am)
+mod.emmeans2 <- as.data.frame(em2)
+
+cat(build_emmeans_text(
+  model = m6,
+  mod.emmeans = em1,
+  pred = "vs",
+  moderator = "am"
+))
+
+m10_off <- fit_ct(
+  y ~ hp * mpg + offset(log(exposure)),
+  data = data,
+  family = "poisson"
+)
+
+em2 <- emmeans(m10_off, ~ hp | mpg)
+mod.emmeans2 <- as.data.frame(em2)
+
+cat(build_emmeans_text(
+  model = m10_off,
+  mod.emmeans = em2,
+  pred = "hp",
+  moderator = "mpg"
+))
+
+
+```
+# Test Johnson Neyman Testing
+```{r}
+
+  jn$jn$conf.low <- exp(jn$jn$conf.low)
+  jn$jn$conf.high <- exp(jn$jn$conf.high)
+
+interactions::johnson_neyman(m1,pred = "hp", moderator = "mpg")
+
+
+original <- interactions::johnson_neyman(model = m11, pred = "hp", modx = "mpg")
+new <- interactions::johnson_neyman(model = m11, pred = "hp", modx = "mpg")
+
+
+cbands <- new$cbands
+
+
+cbands$response_slope <- exp(cbands$slope)
+cbands$response_lower <- exp(cbands$lower)
+cbands$response_upper <- exp(cbands$upper)
+
+
+p$x
+ cbands
+
+temp
+
+jnplot(model = m11, pred = "hp", moderator = "mpg")
+
+jnplot_res(model = m12, pred = "hp", moderator = "mpg")
+jnplot(model = m12, pred = "hp", moderator = "mpg")
+
+
+# still doesn't work for zero infaltion
+jnplot(model = m13, pred = "hp", moderator = "mpg")
+jnplot(model = m14, pred = "hp", moderator = "mpg")
+m14$count
+
+interactions::johnson_neyman(m13, pred = "predictor", modx = "moderator", type = "count")
+
+str(m14)
+interactions::johnson_neyman(m1,pred = "hp", moderator = "mpg")
+model$count
+interactions::johnson_neyman(m14$count, pred = "hp", modx = "mpg")
+
+str(m14)
+
+unique(temp$Significance)
+
+```
+
+
+# Testing interp_ct
+
+```{r}
+
+W <-
+interp_ct(fit_ct(y ~ log(mpg), data = data, family = "zinb"))
+m14 <- fit_ct(y ~ hp * mpg, data = data, family = "zinb")
+
+ggemmeansplot(m14, pred = "hp", moderator = "mpg")
+
+
+m6 <- fit_ct(y ~ hp+ vs * am, data = data, family = "poisson")
+ggemmeansplot(m6, pred = "vs", moderator = "am")
+
+interp_ct(m6)
+
+```
+
+

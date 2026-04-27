@@ -1,3 +1,49 @@
+#' Select and Compare Count Regression Models
+#'
+#' Fits and compares multiple count regression models (Poisson, quasi-Poisson,
+#' negative binomial, zero-inflated Poisson, and zero-inflated negative binomial),
+#' computes diagnostics, bootstrap confidence intervals, and recommends the best model
+#' based on BIC. 
+#'
+#' @param formula A model formula for the count outcome (e.g., \code{y ~ x1 + x2 + offset(log(t))}).
+#'
+#' @param data A data frame containing the variables used in the formula.
+#'
+#' @param B Integer. Number of bootstrap replications used in diagnostic functions.
+#' Default is 100.
+#'
+#' @return A list containing:
+#' \describe{
+#'   \item{models}{List of fitted models (Poisson, qPoisson, NB, ZIP, ZINB).}
+#'   \item{diagnostics}{List of diagnostics from \code{diag_ct()} for each model.}
+#'   \item{performance}{Model performance metrics (AIC, BIC, R2, etc.).}
+#'   \item{recommendation}{Best model selected based on lowest BIC.}
+#'   \item{bootstrap_ci}{Combined bootstrap confidence intervals across models.}
+#'   \item{model_ci}{Analytical confidence intervals from \code{confint()}.}
+#'   \item{bootstrap_plot}{ggplot object visualizing bootstrap confidence intervals.}
+#' }
+#'
+#' @details
+#' This function:
+#' \itemize{
+#'   \item Fits multiple count models using \code{fit_ct()}.
+#'   \item Runs diagnostic checks using \code{diag_ct()} including:
+#'     model performance, bootstrap inference, and model-based confidence intervals.
+#'   \item Selects the best model using BIC.
+#'   \item Combines bootstrap confidence interval results across models for comparison.
+#'   \item Produces a coefficient plot for the count component of all models.
+#' }
+#'
+#'
+#' @section Notes:
+#' \itemize{
+#'   \item ZIP and ZINB models may fail to converge; these are safely handled via \code{safe_fit()}.
+#'   \item Model-based confidence intervals depend on \code{confint()} support for each model class. Specifically, Quasai poisson confindecen interval is not computable.
+#' }
+#'
+#' @import dplyr ggplot2 tibble
+#'
+#' @export
 select_ct <- function(formula, data, B = 100) {
   
   
@@ -30,37 +76,36 @@ select_ct <- function(formula, data, B = 100) {
   # this is a list of list
   diags <- list(
     poisson = if (!is.null(models$poisson)) {
-      diag_count(models$poisson, B = B)
+      diag_ct(models$poisson, B = B)
     } else {
       NULL
     },
     
     qpoisson = if (!is.null(models$qpoisson)) {
-      diag_count(models$qpoisson, B = B)
+      diag_ct(models$qpoisson, B = B)
     } else {
       NULL
     },
     
     negbin = if (!is.null(models$negbin)) {
-      diag_count(models$negbin, B = B)
+      diag_ct(models$negbin, B = B)
     } else {
       NULL
     },
     
     zip = if (!is.null(models$zip)) {
-      diag_count(models$zip, B = B)
+      diag_ct(models$zip, B = B)
     } else {
       NULL
     },
     
     zinb = if (!is.null(models$zinb)) {
-      diag_count(models$zinb, B = B)
+      diag_ct(models$zinb, B = B)
     } else {
       NULL
     }
   )
   
-  print(class(diags$zinb))
   
   # sapply returns a vector
   # we get all columns that 
@@ -73,34 +118,10 @@ select_ct <- function(formula, data, B = 100) {
 
   perf_df$model <- valid_names
   
-
-  # apply list get there performance
-  # this returns a list 
-
+  
   
 
-  # lr test by level
-  # aov also works
-  lr_tests <- list()
-  
-  if (!is.null(models$poisson) && !is.null(models$negbin)) {
-    lr_tests$poisson_vs_negbin <- lmtest::lrtest(models$poisson, models$negbin)
-  }
-  
-  if (!is.null(models$poisson) && !is.null(models$zip)) {
-    lr_tests$zip_vs_poisson <- lmtest::lrtest(models$poisson, models$zip)
-  }
-  
-  if (!is.null(models$negbin) && !is.null(models$zinb)) {
-    lr_tests$zinb_vs_negbin <- lmtest::lrtest(models$negbin, models$zinb)
-  }
-  
-  
-  
-  p_nb  <- lr_tests$poisson_vs_negbin$`Pr(>Chisq)`[2]
-  p_zip <- lr_tests$zip_vs_poisson$`Pr(>Chisq)`[2]
-  p_zinb<- lr_tests$zinb_vs_negbin$`Pr(>Chisq)`[2]
-  
+
 
    # best BIC
    best_model <- perf_df %>%
@@ -113,34 +134,118 @@ select_ct <- function(formula, data, B = 100) {
   )
   
 
-  list(
+  # boot ci
+  boot_ci <- dplyr::bind_rows(
+    lapply(valid_names, function(name) {
+      ci <- diags[[name]]$bootstrap_ci
+      ci$model <- name
+      return(ci)
+    })
+  )
+  
+  
+  
+  
+  model_ci <- dplyr::bind_rows(
+    lapply(valid_names, function(name) {
+      ci <- as.tibble(diags[[name]]$model_ci)
+      ci$model <- name
+      return(ci)
+    })
+  )
+  
+  
+  
+  
+  
+  
+  
+  # add     lr_tests = lr_tests, if necessary
+  
+
+  boot_ci_ct <- boot_ci[!grepl("^zero_", boot_ci$term), ]
+  ct_term_name <- sub("^count_(.*)$", "\\1", boot_ci_ct$term)
+    boot_ci_ct <- boot_ci_ct %>%
+    dplyr::mutate(
+      term = ct_term_name,
+      .keep = "all"
+    )
+
+  
+  boot_plot <- ggplot2::ggplot(
+    boot_ci_ct,
+    ggplot2::aes(
+      x = term,
+      y = (`2.5%` + `97.5%`) / 2,
+      color = model
+    )
+  ) +
+    ggplot2::geom_point(
+      position = ggplot2::position_dodge(width = 0.4)
+    ) +
+    ggplot2::geom_errorbar(
+      ggplot2::aes(
+        ymin = `2.5%`,
+        ymax = `97.5%`
+      ),
+      position = ggplot2::position_dodge(width = 0.4),
+      width = 0.2
+    ) +
+    ggplot2::coord_flip() +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    ggplot2::labs(
+      title = "Bootstrap Confidence Intervals Across Count Models(Count Model Component)",
+      x = "Coefficient",
+      y = "Coeffcient Estimate"
+    )
+  
+  
+  cat("\n================ MODEL DIAGNOSTICS ================\n")
+  
+  cat("\nFitted models:\n")
+  print(names(models)[!sapply(models, is.null)])
+  
+  cat("\nPerformance summary (top rows):\n")
+  print(utils::head(perf_df, 10))
+  
+  cat("\nBest model by BIC:\n")
+  print(best_model)
+  
+  cat("\nBootstrap CI summary:\n")
+  print(utils::head(boot_ci, 10))
+  
+  
+  cat("\nModel-based CI preview (confint):\n")
+  print(utils::head(model_ci, 10))
+  
+  cat("\n====================================================\n\n")
+  
+  
+  # print the bootsrap plot since it is always valid
+  print(boot_plot)
+  
+  # return
+  return(list(
     models = models,
     diagnostics = diags,
     performance = perf_df,
-    lr_tests = lr_tests,
-    recommendation = recommendation
-  )
+    recommendation = recommendation,
+    bootstrap_ci = boot_ci,
+    model_ci = model_ci,
+    bootstrap_plot = boot_plot
+  ))
 }
 
 
 
-
-data <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
-
-
-res <- select_ct(
-  Kills ~ Age + offset(TripDays),
-  data = data,
-  B = 50
-)
-
-
-res$recommendation
+# 
+# data <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
+# 
+# 
+# res <- select_ct(
+#   Kills ~ Age + offset(TripDays),
+#   data = data,
+#   B = 50
+# )
 
 
-head(res$performance)
-
-
-res$lr_tests
-
-names(res$models)

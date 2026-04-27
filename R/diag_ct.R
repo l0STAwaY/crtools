@@ -6,7 +6,7 @@
 #' @returns A list with performance metrics, bootstrap CI, raw bootstrap draws, and model-based CI
 #' @import performance
 #' @export
-diag_count <- function(model, B = 100){
+  diag_ct <- function(model, B = 100){
   
   perf <- performance::model_performance(model)
   
@@ -16,13 +16,21 @@ diag_count <- function(model, B = 100){
   
   
   # confint confidence interval of the coeffice
-  ci_model <- tryCatch(
-    confint(model),
+  ci_model <- tryCatch({
+    ci <- confint(model)
+    term <- rownames(ci)
+    ci <- as_tibble(ci)
+    ci$term <-term
+    # I am surprised that return(ci) actually break this
+    # seems like return oonly preforms well in functions
+    ci
+    },
     error = function(e) {
       warning("confint(model) failed: ", e$message)
       NULL
     }
   )
+  
   
   # this just prints everything autmatically
   # we might not want to print since it messes with select_ct output
@@ -50,21 +58,19 @@ diag_count <- function(model, B = 100){
 
 # data <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
 # 
-# 
 # model <- fit_ct(
 #   Kills ~ Age + offset(TripDays),
 #   data = data,
-#   family = "zip"
-# )
+#   family = "zip" )
 # 
-# str(performance::model_performance(model))
-# 
-# res <- diag_count(model, B = 200)
+# res <- diag_ct(model, B = 200)
 # 
 # 
+# print(res$model_ci)
+# class(res$model_ci)
 # # print(res$performance)
 # # head(res$bootstrap_raw)
 # # print(res$bootstrap_ci)
-# # print(res$model_ci)
+# # 
 
 

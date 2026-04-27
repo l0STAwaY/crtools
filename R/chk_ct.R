@@ -1,19 +1,13 @@
 library(car)
 library(glue)
 library(DHARMa)
-chk_count <- function(model){
+chk_ct <- function(model){
+   
+   # model family
+   fam <- get_ct_family(model)
+
   
-   model_type <- model$family
-   chk_table <- tibble(
-     Enough_Response_Count = NULL,
-     Enough_Zero_Count = NULL,
-     Enough_NonZero_Count= NULL,
-     MultiColiner_Issue = NULL,
-     Dispersion_Ratio = NULL
-   )
-   
-   
-   if(model$ct_family %in% c("poisson","qpoisson","negbin")){
+   if(fam %in% c("poisson","qpoisson","negbin")){
      
      # Condition 2, little to no multi-colinearity
      
@@ -44,7 +38,7 @@ chk_count <- function(model){
      }
      
    
-   else if(model$ct_family %in% c("zip","zinb")){
+   else if(fam %in% c("zip","zinb")){
      
     
      # Condition 1, little to no Multi-Colinearity
@@ -54,11 +48,11 @@ chk_count <- function(model){
     
      }
      else{
-       if(model$ct_family=="zip"){
+       if(fam=="zip"){
          cat(vif_report(model))
          # car::vif(fit_ct(model$formula,model$model,family= "poisson"))
        }
-       else if((model$ct_family=="zinb")){
+       else if((fam=="zinb")){?
          cat(vif_report(model))
          # car::vif(fit_ct(model$formula,model$model,family= "zinb"))
        }
@@ -105,6 +99,23 @@ chk_count <- function(model){
        warning(glue("Total nonzero event counts {non_zero_ct} is not at least 10 events predictor variable"))
      }
    }
+   
+   
+   # Dispersion 
+   pearson.ratio <- sum(residuals(model, type = "pearson")^2) / model$df.residual
+   
+   rec <- if (pearson.ratio > 1.5) {
+     "Overdispersion -> consider Quasai Poisson or NegBin"
+   } else if (pearson.ratio < 0.7) {
+     "Underdispersion -> consider Poisson"
+   } else {
+     "Dispersion OK -> Poisson reasonable"
+   }
+   
+   label_text <- paste0(
+     "Recommendation: ", rec
+   )
+   
    
    # randomize quantile residual plot
     print(plt_rdr(model))

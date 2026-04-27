@@ -20,7 +20,6 @@ summary_overall <- function(data, na.rm = TRUE) {
   # Missing Values
   # Number of rows
   num_data <- data[sapply(data, is.numeric)]
-  
   if (ncol(num_data) == 0) {
     stop("No numeric columns found")
   }
