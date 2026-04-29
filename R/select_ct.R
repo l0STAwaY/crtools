@@ -67,8 +67,12 @@ select_ct <- function(formula, data, B = 100) {
     qpoisson = safe_fit(fit_ct(formula, data, family = "qpoisson"), "qpoisson"),
     negbin   = safe_fit(fit_ct(formula, data, family = "negbin"), "negbin"),
     zip      = safe_fit(fit_ct(formula, data, family = "zip"), "zip"),
-    zinb     = safe_fit(fit_ct(formula, data, family = "zinb"), "zinb")
-  )
+    zinb     = safe_fit(fit_ct(formula, data, family = "zinb"), "zinb"),
+    # ---------------- glmm versions (new) ----------------
+    glmpoisson = safe_fit(fit_ct(formula, data, family = "glmpoisson"), "glmpoisson"),
+    glmnb = safe_fit(fit_ct(formula, data, family = "glmnb"), "glmnb")
+    )
+
   
 
   
@@ -103,6 +107,18 @@ select_ct <- function(formula, data, B = 100) {
       diag_ct(models$zinb, B = B)
     } else {
       NULL
+    },
+    
+    glmpoisson = if (!is.null(models$glmpoisson)) {
+    diag_ct(models$glmpoisson, B = B)
+    } else {
+      NULL
+    },
+    
+    glmnb = if (!is.null(models$glmnb)) {
+      diag_ct(models$glmnb, B = B)
+    } else {
+       NULL
     }
   )
   
@@ -119,8 +135,6 @@ select_ct <- function(formula, data, B = 100) {
   perf_df$model <- valid_names
   
   
-  
-
 
 
    # best BIC
@@ -142,22 +156,16 @@ select_ct <- function(formula, data, B = 100) {
       return(ci)
     })
   )
-  
-  
+
   
   
   model_ci <- dplyr::bind_rows(
     lapply(valid_names, function(name) {
-      ci <- as.tibble(diags[[name]]$model_ci)
+      ci <- as_tibble(diags[[name]]$model_ci)
       ci$model <- name
       return(ci)
     })
   )
-  
-  
-  
-  
-  
   
   
   # add     lr_tests = lr_tests, if necessary
@@ -238,14 +246,14 @@ select_ct <- function(formula, data, B = 100) {
 
 
 
-# 
-# data <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
-# 
-# 
-# res <- select_ct(
-#   Kills ~ Age + offset(TripDays),
-#   data = data,
-#   B = 50
-# )
+
+data2 <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
+
+
+res <- select_ct(
+  Age ~ Kills + offset(TripDays),
+  data = data2,
+  B = 50
+)
 
 

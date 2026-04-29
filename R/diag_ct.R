@@ -7,12 +7,12 @@
 #' @import performance
 #' @export
   diag_ct <- function(model, B = 100){
-  
-  perf <- performance::model_performance(model)
-  
-  
+  perf <- ct_performance_table(model)
   boot <- bootstrap_ct_model(model, B = B)
+  fam <- get_ct_family(model)
   
+  
+
   
   
   # confint confidence interval of the coeffice
@@ -55,22 +55,36 @@
 }
 
 
+ct_performance_table <- function(model){
+  data <- model.frame(model)
+  response <- all.vars(formula(model))[1]
+  fam <- get_ct_family(model)
+  
+  null_model <- fit_ct(
+    as.formula(paste(response, "~ 1")),
+    data = data,
+    family = fam
+  )
+  
+  lr <-  lmtest::lrtest(null_model, model)
+  
+  
+  # McFadden R2
+  ll_null <- lr$LogLik[1] 
+  ll_full <- lr$LogLik[2]
 
-# data <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
-# 
-# model <- fit_ct(
-#   Kills ~ Age + offset(TripDays),
-#   data = data,
-#   family = "zip" )
-# 
-# res <- diag_ct(model, B = 200)
-# 
-# 
-# print(res$model_ci)
-# class(res$model_ci)
-# # print(res$performance)
-# # head(res$bootstrap_raw)
-# # print(res$bootstrap_ci)
-# # 
-
-
+  
+  r2_mcfadden <- if (is.na(ll_null) || is.na(ll_full)) {
+    NA
+  } else {
+    1 - (ll_full / ll_null)
+  }
+  
+  data.frame(
+    AIC = AIC(model),
+    AICc = AIC(model),
+    BIC = BIC(model),
+    logLik = ll_full,
+    R2_mcfadden = r2_mcfadden
+  )
+}

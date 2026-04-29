@@ -76,12 +76,6 @@ model$ct_family
 
 
 
-
-
-
-
-
-
 model1 <- fit_ct(y ~ mpg + cyl,
                 data = data,
                 family = "poisson")
@@ -99,7 +93,7 @@ model3 <- lmer(y ~ mpg + cyl + hp + (1 | gear),
                data = data)
 
 
-model <- fit_ct(y ~ mpg + cyl + hp + (1 | gear),
+model <- fit_ct(y ~ mpg * vs + (1 | gear),
                 data = data,
                 family = "glmpoisson")
 
@@ -112,7 +106,7 @@ model <- fit_ct(Age ~ Kills + (1 | PID),
 
 get_ct_family(model)
 
-model2$data
+
 model2 <- glmmTMB(
   y ~ mpg + cyl + hp + ( | gear),
   data = data,

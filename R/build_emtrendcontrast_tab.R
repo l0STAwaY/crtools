@@ -29,8 +29,8 @@ build_emtrendcontrast_tab <- function(model, pred, moderator) {
     "####################################"
     "# Calculate Marginal Effects"
     "####################################"
-    m<-mean(unlist(model$model[moderator]), na.rm=T)
-    s<-sd(unlist(model$model[moderator]), na.rm=T)
+    m<-mean(data[[moderator]]), na.rm=T)
+    s<-sd(data[[moderator]]), na.rm=T)
     modvarat<-list(c(round(m-s,2), round(m+s,2)))
     names(modvarat)<-c(moderator)
     

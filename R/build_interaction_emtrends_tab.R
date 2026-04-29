@@ -10,8 +10,8 @@ if(pred_type=="cont" && mod_type =="cont"){ #Both Continuous
   "####################################"
   "# Calculate Marginal Effects"
   "####################################"
-  m<-mean(unlist(model$model[moderator]), na.rm=T)
-  s<-sd(unlist(model$model[moderator]), na.rm=T)
+  m<-mean(data[[moderator]], na.rm=T)
+  s<-sd(data[[moderator]], na.rm=T)
   modvarat<-list(c(round(m-s,2), round(m+s,2)))
   names(modvarat)<-c(moderator)
   
@@ -50,5 +50,7 @@ if(pred_type=="cont" && mod_type =="cont"){ #Both Continuous
     # HIDE emtrends_tab, emtrends_int
   }
 }
+
+
 }
 

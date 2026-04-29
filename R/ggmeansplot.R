@@ -61,7 +61,7 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
                                TRUE                             ~ paste("High (Mean + 1SD = ", round(m.mod + s.mod, 2), ")", sep = "")))
     
     if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
-      stop("No confidence intervals returned by ggemmeans. Check model type.")
+      warning("No confidence intervals returned by ggemmeans. Check model type.")
     }
     
     if (any(is.na(ggdat$predicted))) {

@@ -1,4 +1,7 @@
 library(magrittr)
+library(emmeans)
+library(dplyr)
+library(ggeffects)
 #' Build Emmeans Contrasts
 #' Computes pairwise contrasts of estimated marginal means (EMMs)
 #' from a fitted regression model with interactions.
@@ -30,10 +33,10 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
   
  
   if (pred_type == "cont" && mod_type == "cont") { #Both Continuous
-      m.mod<-mean(unlist(model$model[moderator]), na.rm=T)
-      s.mod<-sd(unlist(model$model[moderator]), na.rm=T)
-      m.var<-mean(unlist(model$model[pred]), na.rm=T)
-      s.var<-sd(unlist(model$model[pred]), na.rm=T)
+      m.mod<-mean(data[[moderator]], na.rm=T)
+      s.mod<-sd(data[[moderator]], na.rm=T)
+      m.var<-mean(data[[pred]], na.rm=T)
+      s.var<-sd(data[[pred]], na.rm=T)
       modvarat<-list(c(round(m.mod-s.mod,2), round(m.mod+s.mod,2)),
                      c(round(m.var-s.var,2), round(m.var+s.var,2)))
       names(modvarat)<-c(moderator, pred)
@@ -86,8 +89,8 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
         "####################################"
         "# Calculate Marginal Effects"
         "####################################"
-        m<-mean(unlist(model$model[pred]), na.rm=T)
-        s<-sd(unlist(model$model[pred]), na.rm=T)
+        m<-mean(data[[pred]], na.rm=T)
+        s<-sd(data[[pred]], na.rm=T)
         modvarat<-list(c(round(m-s,2), round(m+s,2)))
         names(modvarat)<-c(pred)
         
@@ -111,8 +114,8 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
         "####################################"
         "# Calculate Marginal Effects"
         "####################################"
-        m<-mean(unlist(model$model[moderator]), na.rm=T)
-        s<-sd(unlist(model$model[moderator]), na.rm=T)
+        m<-mean(data[[moderator]], na.rm=T)
+        s<-sd(data[[moderator]], na.rm=T)
         
         modvarat<-list(c(round(m-s,2), round(m+s,2)))
         names(modvarat)<-c(moderator)
@@ -140,6 +143,7 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
   
   
   
+
 
   
   

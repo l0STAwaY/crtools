@@ -40,7 +40,7 @@ bootstrap_ct_model <- function(model, B = 100) {
   # this 
   names(data) <- sub("^offset\\((.*)\\)$", "\\1", names(data))
   formula <- formula(model)
-  family <- get_ct_family(model)
+  fam <- get_ct_family(model)
   coefs_all <- tibble::tibble()
   
   
@@ -49,14 +49,21 @@ bootstrap_ct_model <- function(model, B = 100) {
     boot_dt <- dplyr::slice_sample(data, n = nrow(data), replace = TRUE)
     
     
-    fit_boot <- fit_ct(formula, boot_dt, family = family)
+    fit_boot <- fit_ct(formula, boot_dt, family = fam)
     
 
     coef_list <- as.list(coef(fit_boot))
     
+    if (fam %in% c("glmnb", "glmpoisson")) {
+      coefs <- fixef(fit_boot)$cond
+    } else {
+      coefs <- coef(fit_boot)
+    }
+    
+    coefs <- unlist(coefs)  # ensure numeric vector
     coefs_all <- dplyr::bind_rows(
       coefs_all,
-      tibble::as_tibble(as.list(c(b = b, coef(fit_boot))))
+      tibble::as_tibble(as.list(c(b = b, coefs)))
     )
 
   }

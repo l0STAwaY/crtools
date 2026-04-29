@@ -4,14 +4,21 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
   fam <- get_ct_family(model)
   data <-model.frame(model)
   mod.sum <- summary(model)
+  response <- all.vars(formula(model))[1]
   
   
   # likely we would need factorize data that has two level
   
   
   # update refits the model with the formula with nykk
-  null_model <- update(model, . ~ 1)
+  null_model <- fit_ct(
+    as.formula(paste(response, "~ 1")),
+    data = data,
+    family = fam
+  )
+
   lr <-  lmtest::lrtest(null_model, model)
+  
   
   # degree of freedom
   lr_stat <- lr$Chisq[2]
@@ -21,18 +28,31 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
   # McFadden R2
   ll_null <- lr$LogLik[1] 
   ll_full <- lr$LogLik[2]
-  r2 <- 1 - (ll_full / ll_null)
   
-  mc_class <- if (r2 < 0.1) {
-    "weak"
-  } else if (r2 < 0.2) {
-    "moderate"
-  } else if (r2 < 0.4) {
-    "strong"
+
+  
+  if (fam == "qpoisson") {
+    message("qpoisson does not have a true liklihood hence McFadden's R2 is not returned")
+    r2 <- NA
+    mc_class <- "not defined for quasi-poisson"
   } else {
-    "very strong"
+    r2 <- 1 - (ll_full / ll_null)
+    
+    mc_class <- if (is.na(r2)) {
+      "undefined"
+    } else if (r2 < 0.1) {
+      "weak"
+    } else if (r2 < 0.2) {
+      "moderate"
+    } else if (r2 < 0.4) {
+      "strong"
+    } else {
+      "very strong"
+    }
   }
   
+  
+
   
   
   # Dispersion ratio

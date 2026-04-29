@@ -42,7 +42,7 @@ format-links: [pdf]
 
 # Loading File and showcasing ggmeansplot.R
 ```{r}
-source("/Users/apple/Documents/GitHub/crtools/bootstrap_ct_model.R")
+source("bootstrap_ct_model.R")
 source("correlation_summary.R")
 source("diag_ct.R")
 source("fit_ct.R")
@@ -94,8 +94,6 @@ ggemmeansplot(m1, pred = "vs", moderator = "hp")
 
 m2 <-  fit_ct(y ~ hp * vs, data = data, family = "negbin")
 ggemmeansplot(m2, pred = "hp", moderator = "vs")
-
-
 
 m3 <-  fit_ct(y ~ hp * vs, data = data, family = "qpoisson")
 ggemmeansplot(m3, pred = "hp", moderator = "vs")
@@ -189,6 +187,100 @@ m14_off <- fit_ct(
 )
 ggemmeansplot(m14_off, pred = "hp", moderator = "mpg")
 
+
+
+# glmer mixed effect model after 16
+
+
+# cont cont
+m17 <- fit_ct(y ~ hp * mpg, data = data, family = "glmpoisson")
+ggemmeansplot(m17, pred = "hp", moderator = "mpg")
+
+m18 <- fit_ct(y ~ hp * mpg, data = data, family = "glmnb")
+ggemmeansplot(m18, pred = "hp", moderator = "mpg")
+
+m17_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data = data, family = "glmpoisson")
+ggemmeansplot(m17_off, pred = "hp", moderator = "mpg")
+
+m18_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data = data, family = "glmnb")
+ggemmeansplot(m18_off, pred = "hp", moderator = "mpg")
+
+
+# cat cat
+m19 <- fit_ct(y ~ vs * am, data = data, family = "glmpoisson")
+ggemmeansplot(m19, pred = "vs", moderator = "am")
+
+m20 <- fit_ct(y ~ vs * am, data = data, family = "glmnb")
+ggemmeansplot(m20, pred = "vs", moderator = "am")
+
+m19_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data = data, family = "glmpoisson")
+ggemmeansplot(m19_off, pred = "vs", moderator = "am")
+
+m20_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data = data, family = "glmnb")
+ggemmeansplot(m20_off, pred = "vs", moderator = "am")
+
+# cat cont
+
+m21 <- fit_ct(y ~ hp * vs, data = data, family = "glmpoisson")
+ggemmeansplot(m21, pred = "hp", moderator = "vs")
+
+m22 <- fit_ct(y ~ hp * vs, data = data, family = "glmnb")
+ggemmeansplot(m22, pred = "hp", moderator = "vs")
+
+m21_off <- fit_ct(y ~ hp * vs + offset(log(exposure)), data = data, family = "glmpoisson")
+ggemmeansplot(m21_off, pred = "hp", moderator = "vs")
+
+m22_off <- fit_ct(y ~ hp * vs + offset(log(exposure)), data = data, family = "glmnb")
+ggemmeansplot(m22_off, pred = "hp", moderator = "vs")
+
+
+
+
+# refit with random effect specified
+# cont cont
+m17 <- fit_ct(y ~ hp * mpg + (1 | gear), data = data, family = "glmpoisson")
+
+m18 <- fit_ct(y ~ hp * mpg + (1 | gear), data = data, family = "glmnb")
+
+m17_off <- fit_ct(y ~ hp * mpg + (1 | gear) + offset(log(exposure)), data = data, family = "glmpoisson")
+
+m18_off <- fit_ct(y ~ hp * mpg + (1 | gear) + offset(log(exposure)), data = data, family = "glmnb")
+
+
+# cat cat
+m19 <- fit_ct(y ~ vs * am + (1 | gear), data = data, family = "glmpoisson")
+
+m20 <- fit_ct(y ~ vs * am + (1 | gear), data = data, family = "glmnb")
+
+m19_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data = data, family = "glmpoisson")
+
+m20_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data = data, family = "glmnb")
+
+# cat cont
+
+m21 <- fit_ct(y ~ hp * vs + (1 | gear), data = data, family = "glmpoisson")
+
+m22 <- fit_ct(y ~ hp * vs + (1 | gear), data = data, family = "glmnb")
+
+m21_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data = data, family = "glmpoisson")
+
+m22_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data = data, family = "glmnb")
+
+
+# working examples 
+
+
+model <- fit_ct(y ~ mpg * vs + (1 | gear),
+                data = data,
+                family = "glmpoisson")
+
+
+data2 <- read.csv("/Users/apple/Documents/GitHub/crtools/Private_Dataset/McMillanAcheMonkeyTrips.csv")
+
+model2 <- fit_ct(Age ~ Kills + (1 | PID),
+                data = data2,
+                family = "glmpoisson")
+
 ```
 
 
@@ -205,7 +297,7 @@ mtcars$am <- as.factor(mtcars$am)
 em1 <- emmeans(m6, ~ vs | am,type="response")
 mod.emmeans1 <- as.data.frame(em1)
 
-em2 <- emmeans(m14_off, ~ vs | am)
+em2 <- emmeans(m14_off, ~ hp | mpg)
 mod.emmeans2 <- as.data.frame(em2)
 
 cat(build_emmeans_text(
@@ -233,143 +325,138 @@ cat(build_emmeans_text(
 
 
 ```
-# Test Johnson Neyman Testing
-```{r}
 
-  jn$jn$conf.low <- exp(jn$jn$conf.low)
-  jn$jn$conf.high <- exp(jn$jn$conf.high)
-
-interactions::johnson_neyman(m1,pred = "hp", moderator = "mpg")
-
-
-original <- interactions::johnson_neyman(model = m11, pred = "hp", modx = "mpg")
-new <- interactions::johnson_neyman(model = m11, pred = "hp", modx = "mpg")
-
-
-cbands <- new$cbands
-
-
-cbands$response_slope <- exp(cbands$slope)
-cbands$response_lower <- exp(cbands$lower)
-cbands$response_upper <- exp(cbands$upper)
-
-
-p$x
- cbands
-
-temp
-
-jnplot(model = m11, pred = "hp", moderator = "mpg")
-
-
-build_interaction_emtrends_tab(model = m11, pred = "hp", moderator = "mpg")
-
-
-jnplot_res(model = m12, pred = "hp", moderator = "mpg")
-jnplot(model = m12, pred = "hp", moderator = "mpg")
-
-
-# still doesn't work for zero infaltion
-jnplot(model = m13, pred = "hp", moderator = "mpg")
-jnplot(model = m14, pred = "hp", moderator = "mpg")
-m14$count
-
-interactions::johnson_neyman(m13, pred = "predictor", modx = "moderator", type = "count")
-
-str(m14)
-interactions::johnson_neyman(m1,pred = "hp", moderator = "mpg")
-model$count
-interactions::johnson_neyman(m14$count, pred = "hp", modx = "mpg")
-
-str(m14)
-
-unique(temp$Significance)
-
-
-```
 
 
 # Testing interp_ct
 
 ```{r}
 
-W <-
-interp_ct(fit_ct(y ~ log(mpg), data = data, family = "zinb"))
-m14 <- fit_ct(y ~ hp * mpg, data = data, family = "zinb")
-
-ggemmeansplot(m14, pred = "hp", moderator = "mpg")
-
-t<-interp_ct(m6)
-# cat + cat
-m6 <- fit_ct(y ~ vs * am, data = data, family = "poisson")
-ggemmeansplot(m6, pred = "vs", moderator = "am")
-
-# cat cont
-m1 <- fit_ct(y ~ drat * vs, data = data, family = "poisson")
-t<-interp_ct(m1)
-
-str(t)
-
-m10 <- fit_ct(y ~ hp * mpg, data = data, family = "poisson")
-t<-interp_ct(m10)
+#===========================
+# cont x categorical poisson
+#===========================
 
 
-y <- rpois(1000,10)
-x <- rnorm(1000,10,1)
-x2 <- rnorm(1000,20,1)
-z <- rbernoulli(1000, p = 0.3)
-z <- as.factor(z)
+t_m1 <- interp_ct(m1)
 
-data_temp<- tibble(x=x,y=y,z=z,x2=x2)
+t_m2 <- interp_ct(m2)
 
-m <- fit_ct(y ~ x * x2, data = data_temp, family = "poisson")
+t_m3 <- interp_ct(m3) # error
+
+t_m4 <- interp_ct(m4)
+
+t_m5 <- interp_ct(m5)
+
+t_m1_off <- interp_ct(m1_off)
+
+t_m5_off <- interp_ct(m5_off)
 
 
- ggemmeansplot(m, pred = "x", moderator = "x2")
-         
+#===========================
+# cat x categorical poisson
+#===========================
 
- 
- em<-emmeans::emtrends(m1,specs =as.formula("~vs")  ,
-          var = "drat"
-        )
- 
- 
-  em<-emmeans::emtrends(m1,specs ="vs"  ,
-          var = "drat")
+t_m6 <- interp_ct(m6)
 
-  
-        em_df <- as_tibble(em)
+t_m7 <- interp_ct(m7)
 
-        em_df[[paste0("drat",".trend")]] <- exp(em_df[[paste0("drat",".trend")]])
-        em_df$asymp.LCL <- exp(em$asymp.LCL)
-        em_df$asymp.UCL <- exp(em_df$asymp.UCL)
-        
-        class(em)
-        
-        
-        # this turns the data into response scale
-        em_df <- as.data.frame(em)
-        
-        # safe exponentiation (only meaningful for log-link models)
-        em_df$trend     <- exp(em_df$trend)
-        em_df$asymp.LCL <- exp(em_df$asymp.LCL)
-        em_df$asymp.UCL <- exp(em_df$asymp.UCL)
-        
-        emmip(m1, vs ~ drat, type = "response")
+t_m8 <- interp_ct(m8)
 
-        
-        
-        plot(em)
-        
-my_grid <- emmeans(m1, ~ vs|drat, type = "response", at = list(drat = seq(0, 10, by = 1)))
+t_m9 <- interp_ct(m9)
 
-plot(my_grid)
+t_m15 <- interp_ct(m15)
 
-        
+t_m6_off <- interp_ct(m6_off)
+
+
+#===========================
+# cont x cont poisson
+#===========================
+
+t_m10 <- interp_ct(m10)
+
+t_m11 <- interp_ct(m11)
+
+t_m12 <- interp_ct(m12)
+
+t_m13 <- interp_ct(m13)
+
+t_m14 <- interp_ct(m14)
+
+t_m10_off <- interp_ct(m10_off)
+
+t_m14_off <- interp_ct(m14_off)
+
+
+
+
+
+#===========================
+# GLMER MIXED EFFECT
+#===========================
+
+
+#===========================
+# cont x cont poisson
+#===========================
+
+t_m17 <- interp_ct(m17)
+t_m18 <- interp_ct(m18)
+
+t_m17_off <- interp_ct(m17_off)
+t_m18_off <- interp_ct(m18_off)
+
+
+t_m19 <- interp_ct(m19)
+t_m20 <- interp_ct(m20)
+
+t_m19_off <- interp_ct(m19_off)
+t_m20_off <- interp_ct(m20_off)
+
+
+#===========================
+# cat x categorical poisson
+#===========================
+
+
+t_m21 <- interp_ct(m21)
+t_m22 <- interp_ct(m22)
+
+t_m21_off <- interp_ct(m21_off)
+t_m22_off <- interp_ct(m22_off)
+
+
+#===========================
+# cont x categorical poisson
+#===========================
+
+t_m23 <- interp_ct(m23)
+t_m24 <- interp_ct(m24)
+
+
+
+
+
         
 ```
+```{r}
+
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(ggeffects)
+library(emmeans)
+library(pscl)
+library(glmmTMB)
+library(lmtest)
+library(car)
+library(carData)
+library(rstatix)
+library(testthat)
+library(devtools)
 
 
+```
 ```{r}
 
 
@@ -395,6 +482,8 @@ txt <- build_emmeanscontrasts_text(
   alpha = 0.05
 )
 
+
+t <- interp_ct(m3)
 
 
 ```
