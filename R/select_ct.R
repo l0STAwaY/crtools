@@ -244,16 +244,3 @@ select_ct <- function(formula, data, B = 100) {
   ))
 }
 
-
-
-
-data2 <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
-
-
-res <- select_ct(
-  Age ~ Kills + offset(TripDays),
-  data = data2,
-  B = 50
-)
-
-

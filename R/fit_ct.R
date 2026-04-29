@@ -65,62 +65,62 @@ fit_ct <- function(formula, data, family = "poisson") {
   
   return(model)
 }
-
-
-model <- fit_ct(y ~ mpg + cyl + hp + (1 | gear),
-       data = data,
-       family = "glmpoisson")
-
-str(model)
-model$ct_family
-
-
-
-model1 <- fit_ct(y ~ mpg + cyl,
-                data = data,
-                family = "poisson")
-
-
-model <- fit_ct(y ~ mpg + cyl + hp + (1| gear),
-                data = data,
-                family = "glmnb")
-
-model <- fit_ct(y ~ mpg + cyl + hp + (1+exposure| gear),
-                data = data,
-                family = "glmnb")
-
-model3 <- lmer(y ~ mpg + cyl + hp + (1 | gear),
-               data = data)
-
-
-model <- fit_ct(y ~ mpg * vs + (1 | gear),
-                data = data,
-                family = "glmpoisson")
-
-data2 <- read.csv("/Users/apple/Documents/GitHub/crtools/Private_Dataset/McMillanAcheMonkeyTrips.csv")
-
-model <- fit_ct(Age ~ Kills + (1 | PID),
-                data = data2,
-                family = "glmpoisson")
-
-
-get_ct_family(model)
-
-
-model2 <- glmmTMB(
-  y ~ mpg + cyl + hp + ( | gear),
-  data = data,
-  family = poisson()
-)
-
-model2 <- glmmTMB(
-  y ~ mpg + cyl + hp + (1 | gear),
-  data = data,
-  family = poisson()
-)
-
-get_ct_family(model)
-x <-  grepl("Negative Binomial", family(model)$family)
-ig. Negative Binomial %in% family(model)["family"]
-names(family(model))
-attr(model,"family")
+# 
+# 
+# model <- fit_ct(y ~ mpg + cyl + hp + (1 | gear),
+#        data = data,
+#        family = "glmpoisson")
+# 
+# str(model)
+# model$ct_family
+# 
+# 
+# 
+# model1 <- fit_ct(y ~ mpg + cyl,
+#                 data = data,
+#                 family = "poisson")
+# 
+# 
+# model <- fit_ct(y ~ mpg + cyl + hp + (1| gear),
+#                 data = data,
+#                 family = "glmnb")
+# 
+# model <- fit_ct(y ~ mpg + cyl + hp + (1+exposure| gear),
+#                 data = data,
+#                 family = "glmnb")
+# 
+# model3 <- lmer(y ~ mpg + cyl + hp + (1 | gear),
+#                data = data)
+# 
+# 
+# model <- fit_ct(y ~ mpg * vs + (1 | gear),
+#                 data = data,
+#                 family = "glmpoisson")
+# 
+# data2 <- read.csv("/Users/apple/Documents/GitHub/crtools/Private_Dataset/McMillanAcheMonkeyTrips.csv")
+# 
+# model <- fit_ct(Age ~ Kills + (1 | PID),
+#                 data = data2,
+#                 family = "glmpoisson")
+# 
+# 
+# get_ct_family(model)
+# 
+# 
+# model2 <- glmmTMB(
+#   y ~ mpg + cyl + hp + ( | gear),
+#   data = data,
+#   family = poisson()
+# )
+# 
+# model2 <- glmmTMB(
+#   y ~ mpg + cyl + hp + (1 | gear),
+#   data = data,
+#   family = poisson()
+# )
+# 
+# get_ct_family(model)
+# x <-  grepl("Negative Binomial", family(model)$family)
+# ig. Negative Binomial %in% family(model)["family"]
+# names(family(model))
+# attr(model,"family")

@@ -18,6 +18,8 @@ jnplot <- function(model,pred,moderator,control.fdr = TRUE) {
   data <- model.frame(model)
   pred_type <- if (is.numeric(data[[pred]])) "cont" else "factor"
   mod_type  <- if (is.numeric(data[[moderator]])) "cont" else "factor"
+  fam <- get_ct_family(model)
+  
   
   if (!(pred_type == "cont" && mod_type == "cont")) {
     stop("Johnson-Neyman requires BOTH predictor and moderator to be continuous.")
@@ -25,6 +27,12 @@ jnplot <- function(model,pred,moderator,control.fdr = TRUE) {
   
   if(get_ct_family(model) %in% c("zinb","zip")){
     warning("Johnson-Neyman is not implemented for ZeroInflation Model Yet.")
+    return(NULL)
+  }
+  
+  
+  if (fam %in% c("glmpoisson", "glmnb")) {
+    warning("Johnson-Neyman is not recommended for glmmTMB models.")
     return(NULL)
   }
   

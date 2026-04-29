@@ -21,11 +21,11 @@
 #'
 #' @export
 build_emmeanscontrasts_text <- function(model, mod.emmeanscontrast, pred, moderator, alpha = 0.05){
-  if (!is.data.frame(mod.emmeans)) {
-    mod.emmeans <- as.data.frame(mod.emmeans)
+  if (!is.data.frame(mod.emmeanscontrast)) {
+    mod.emmeanscontrast <- as.data.frame(mod.emmeanscontrast)
   }
   
-  if (nrow(mod.emmeans) == 0) {
+  if (nrow(mod.emmeanscontrast) == 0) {
     return("No emmeans results available.")
   }
   

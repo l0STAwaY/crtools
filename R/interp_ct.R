@@ -1,4 +1,59 @@
-
+#' Model Interpretation for Count Regression Models
+#'
+#' Provides a unified interpretation framework for count regression models
+#' fitted using \code{fit_ct}. The function generates model interpretation text,
+#' interaction summaries, marginal effects tables, and diagnostic plots.
+#'
+#' @param model A fitted count regression model from \code{fit_ct}.
+#' @param alpha Significance level used for interaction tests and confidence intervals (default = 0.05).
+#' @param display Logical. If TRUE, prints tables and plots for model interactions.
+#'
+#' @details
+#' This function summarizes:
+#' \itemize{
+#'   \item Main model interpretation (log-link coefficient interpretation)
+#'   \item Emmeans-based marginal means for interactions
+#'   \item Emtrends-based marginal slopes for interactions
+#'   \item Pairwise contrasts for both emmeans and emtrends
+#'   \item Diagnostic interaction plots including:
+#'     \itemize{
+#'       \item Emmeans plots
+#'       \item Emtrends plots
+#'       \item Johnson–Neyman plots (when available)
+#'     }
+#' }
+#'
+#' Interaction types supported:
+#' \itemize{
+#'   \item Continuous × Continuous
+#'   \item Continuous × Factor
+#'   \item Factor × Factor (limited to emmeans only)
+#' }
+#'
+#' Johnson–Neyman plots are only produced for models and interactions
+#' where supported (only glm).
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item \code{text}: Full model interpretation summary
+#'   \item \code{emmeans_tables}: Marginal means tables
+#'   \item \code{contrast_tables}: Pairwise contrasts of marginal means
+#'   \item \code{emtrends_tables}: Marginal slope estimates
+#'   \item \code{emtrends_contrast_tables}: Pairwise slope contrasts
+#'   \item \code{plots}: List of interaction plots including:
+#'     \itemize{
+#'       \item emmeans plots
+#'       \item emtrends plots
+#'       \item Johnson–Neyman plots (if available)
+#'     }
+#' }
+#'
+#' @import emmeans ggplot2 dplyr lmtest
+#' @export
+#'
+#' @examples
+#' interp_ct(model)
+#' interp_ct(model, alpha = 0.01, display = FALSE)
 interp_ct <- function(model,alpha=0.05,display=TRUE){
   # model family
   fam <- get_ct_family(model)
@@ -608,11 +663,26 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
   }
   
   return(list(
+    
+    # ---------------- main interpretation ----------------
     text = text,
+    
+    # ---------------- emmeans ----------------
     emmeans_tables = inter_emmeans_table_list,
+    
+    # ---------------- emmeans contrasts ----------------
     contrast_tables = inter_contrast_table_list,
-    contrast_text = inter_contrast_text_list,
-    plots = inter_emmeans_plot_list
+    
+    # ---------------- emtrends ----------------
+    emtrends_tables = inter_emtrends_table_list,
+    emtrends_contrast_tables = inter_emtrends_contrast_table_list,
+    
+    # ---------------- plots ----------------
+    plots = list(
+      emmeans = inter_emmeans_plot_list,
+      emtrends = inter_emtrends_plot_list,
+      johnson_neyman = inter_jn_plot_list
+    )
   ))
 }
 

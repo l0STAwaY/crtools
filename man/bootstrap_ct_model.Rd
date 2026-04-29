@@ -28,7 +28,6 @@ and computes empirical confidence intervals for all coefficients.
 The bootstrap procedure:
 \enumerate{
 \item Extracts the model frame from the fitted object.
-\item Renames offset terms (e.g., \code{offset(TripDays)} to \code{TripDays}).
 \item Repeatedly resamples rows with replacement.
 \item Refits the model using \code{fit_ct()}.
 \item Aggregates coefficient estimates across bootstrap samples.
@@ -38,13 +37,4 @@ This function assumes that the model is correctly specified and that
 \code{fit_ct()} supports the underlying model family.
 
 Bootstrap results may be unstable for zero-inflated models or small samples.
-}
-\examples{
-\dontrun{
-data <- read.csv("my_data.csv")
-model <- fit_ct(Y ~ X1 + offset(X2), data = data, family = "zip")
-res <- bootstrap_ct_model(model, B = 200)
-head(res$raw)
-res$ci
-}
 }

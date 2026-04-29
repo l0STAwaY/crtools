@@ -4,7 +4,7 @@
 \alias{summary_overall}
 \title{Title}
 \usage{
-summary_overall(data, na.rm = TRUE)
+summary_overall(data, na.rm = TRUE, ggpair = TRUE)
 }
 \arguments{
 \item{data}{A data frame}

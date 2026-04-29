@@ -62,6 +62,7 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
     
     if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
       warning("No confidence intervals returned by ggemmeans. Check model type.")
+      return(NULL)
     }
     
     if (any(is.na(ggdat$predicted))) {
@@ -94,7 +95,8 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
     
 
     if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
-      stop("No confidence intervals returned by ggemmeans. Check model type.")
+      warning("No confidence intervals returned by ggemmeans. Check model type.")
+      return(NULL)
     }
     
     if (any(is.na(ggdat$predicted))) {
@@ -132,7 +134,8 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
       
 
       if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
-        stop("No confidence intervals returned by ggemmeans. Check model type.")
+        warning("No confidence intervals returned by ggemmeans. Check model type.")
+        return(NULL)
       }
       
       p <- ggplot(data = ggdat, aes(x = x, y = predicted, color = group, fill = group)) +
@@ -169,7 +172,8 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
       
 
       if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
-        stop("No confidence intervals returned by ggemmeans. Check model type.")
+        warning("No confidence intervals returned by ggemmeans. Check model type.")
+        return(NULL)
       }
       
       if (any(is.na(ggdat$predicted))) {
