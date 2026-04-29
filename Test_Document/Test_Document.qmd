@@ -56,10 +56,12 @@ source("select_ct.R")
 source("summary_ct.R")
 source("summary_overall.R")
 
+
 library(ggplot2)
 library(ggeffects)
 library(emmeans)
 library(pscl)
+ library(purrr)
 data(mtcars)
 set.seed(113)
 
@@ -195,6 +197,7 @@ ggemmeansplot(m14_off, pred = "hp", moderator = "mpg")
 ```{r}
 
 
+
 mtcars$vs <- as.factor(mtcars$vs)
 mtcars$am <- as.factor(mtcars$am)
 
@@ -258,6 +261,10 @@ temp
 
 jnplot(model = m11, pred = "hp", moderator = "mpg")
 
+
+build_interaction_emtrends_tab(model = m11, pred = "hp", moderator = "mpg")
+
+
 jnplot_res(model = m12, pred = "hp", moderator = "mpg")
 jnplot(model = m12, pred = "hp", moderator = "mpg")
 
@@ -278,6 +285,7 @@ str(m14)
 
 unique(temp$Significance)
 
+
 ```
 
 
@@ -291,12 +299,103 @@ m14 <- fit_ct(y ~ hp * mpg, data = data, family = "zinb")
 
 ggemmeansplot(m14, pred = "hp", moderator = "mpg")
 
-
-m6 <- fit_ct(y ~ hp+ vs * am, data = data, family = "poisson")
+t<-interp_ct(m6)
+# cat + cat
+m6 <- fit_ct(y ~ vs * am, data = data, family = "poisson")
 ggemmeansplot(m6, pred = "vs", moderator = "am")
 
-interp_ct(m6)
+# cat cont
+m1 <- fit_ct(y ~ drat * vs, data = data, family = "poisson")
+t<-interp_ct(m1)
 
+str(t)
+
+m10 <- fit_ct(y ~ hp * mpg, data = data, family = "poisson")
+t<-interp_ct(m10)
+
+
+y <- rpois(1000,10)
+x <- rnorm(1000,10,1)
+x2 <- rnorm(1000,20,1)
+z <- rbernoulli(1000, p = 0.3)
+z <- as.factor(z)
+
+data_temp<- tibble(x=x,y=y,z=z,x2=x2)
+
+m <- fit_ct(y ~ x * x2, data = data_temp, family = "poisson")
+
+
+ ggemmeansplot(m, pred = "x", moderator = "x2")
+         
+
+ 
+ em<-emmeans::emtrends(m1,specs =as.formula("~vs")  ,
+          var = "drat"
+        )
+ 
+ 
+  em<-emmeans::emtrends(m1,specs ="vs"  ,
+          var = "drat")
+
+  
+        em_df <- as_tibble(em)
+
+        em_df[[paste0("drat",".trend")]] <- exp(em_df[[paste0("drat",".trend")]])
+        em_df$asymp.LCL <- exp(em$asymp.LCL)
+        em_df$asymp.UCL <- exp(em_df$asymp.UCL)
+        
+        class(em)
+        
+        
+        # this turns the data into response scale
+        em_df <- as.data.frame(em)
+        
+        # safe exponentiation (only meaningful for log-link models)
+        em_df$trend     <- exp(em_df$trend)
+        em_df$asymp.LCL <- exp(em_df$asymp.LCL)
+        em_df$asymp.UCL <- exp(em_df$asymp.UCL)
+        
+        emmip(m1, vs ~ drat, type = "response")
+
+        
+        
+        plot(em)
+        
+my_grid <- emmeans(m1, ~ vs|drat, type = "response", at = list(drat = seq(0, 10, by = 1)))
+
+plot(my_grid)
+
+        
+        
 ```
 
+
+```{r}
+
+
+
+m <- fit_ct(
+  y ~ hp * mpg + offset(log(exposure)),
+  data = data,
+  family = "poisson"
+)
+
+res <- build_emmeanscontrasts_tab(
+  model = m,
+  pred = "hp",
+  moderator = "mpg"
+)
+
+
+txt <- build_emmeanscontrasts_text(
+  model = m,
+  mod.emmeanscontrast = res,
+  pred = "hp",
+  moderator = "mpg",
+  alpha = 0.05
+)
+
+
+
+```
 

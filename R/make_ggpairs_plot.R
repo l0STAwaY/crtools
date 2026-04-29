@@ -1,9 +1,19 @@
 make_ggpairs_plot <- function(data){
-  upper <- list(continuous = "points", discrete = wrap("colbar", size = 0), combo = "box_no_facet", na = "na")
-  lower <- list(continuous = "cor", discrete = wrap("colbar", size = 0), combo = "box_no_facet", na = "na")
-  ggpairs(data, progress = F, upper = upper, lower = lower) +
-    theme_bw()+
-    theme(axis.text.x = element_text(angle=60, vjust = 1, hjust=1)) + 
-    scale_fill_grey()+
-    scale_color_grey()
+  
+  upper <- list(continuous = "cor", discrete = "count", combo = "box_no_facet")
+  lower <- list(continuous = "points", discrete = "barDiag", combo = "box_no_facet")
+  
+  p <- GGally::ggpairs(
+    data,
+    progress = FALSE,
+    upper = upper,
+    lower = lower
+  )
+  p +
+    theme_bw() +
+    theme(
+      axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)
+    )
+  
+  
 }

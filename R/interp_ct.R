@@ -1,4 +1,5 @@
-interp_ct <- function(model,alpha=0.05){
+
+interp_ct <- function(model,alpha=0.05,display=TRUE){
   # model family
   fam <- get_ct_family(model)
   data <-model.frame(model)
@@ -45,12 +46,12 @@ interp_ct <- function(model,alpha=0.05){
   )
   
   
-  # Check offset varaible
+  # Check for offset varaible
   offset_var <- grep("^offset\\((.*)\\)$", names(data), value = TRUE)
   offset_var <-  sub("^offset\\((.*)\\)$", "\\1", offset_var)
   has_offset<-length(offset_var)>0
   
-  # response variable
+  # Response variable
   # Note this is different behaviour from names(model$model)[1]
   # names(model$model)[1] will return with log() if transformed where as all.var wont
   
@@ -73,7 +74,9 @@ interp_ct <- function(model,alpha=0.05){
     model$family$link
   } else if (fam %in% c("zip", "zinb")) {
     "log"
-  } else {
+  } else if (fam %in% c("glmnb","glmpoisson")){
+    family(model)$link
+  } else{
     NA
   }
   
@@ -89,15 +92,21 @@ interp_ct <- function(model,alpha=0.05){
   coefs <- if (fam %in% c("zip", "zinb")) {
     # keep ONLY count component
     coefs_raw[grepl("^count_", names(coefs_raw))]
-    
   } else {
     coefs_raw
   }
   
   
   # filter out the intercept and what remains is only the count coeffcients
-  coefs <- coefs[names(coefs) != "(Intercept)"]
+  if(fam %in% c("glmnb","glmpoisson")){
+    coefs <- fixef(model)$cond
+  }else{
+    coefs <- coefs[names(coefs) != "(Intercept)"]
+  }
 
+
+  
+  
   # ---------------- main interpretation ----------------
   # implemented log - unit
   # log - log
@@ -148,86 +157,177 @@ interp_ct <- function(model,alpha=0.05){
   
   # This is a list structure becaus we can have multiple interactions
   # All the plot produced by the following process
-  inter_plot_list <- list()
   
-  # All the test produced by the following process
-  inter_text_list <- list()
-
-
+  #
+  inter_emmeans_plot_list <- list() # this the emmeans plot
+  inter_emmeans_table_list   <- list()
+  inter_emmeans_plot_list    <- list()
+  inter_emmeans_text_list <- list()
+  
+  # no plot contrast
+  inter_contrast_table_list  <- list()
+  inter_contrast_text_list   <- list()
+  
+  
+  inter_emtrends_contrast_table_list <- list()
+  inter_emtrends_contrast_text_list  <- list()
+  
+  # emtrends
+  inter_emtrends_plot_list   <- list()
+  inter_emtrends_table_list  <- list()
+  inter_emtrends_text_list    <- list()
+  
+  # jnplot
+  inter_jn_plot_list <- list()
+  
+  
+  
+  
+  
   # use term to get term
   interactions <- attr(terms(model), "term.labels")
-
   interactions <- interactions[grepl(":", interactions)]
   
 
   
   if (length(interactions) > 0) {
     
-    message("This model has interactions so these interpretations are based on marginal effects, which are partial 
-          derivatives of the regression equation with respect to each variable. These marginal effects are calculated as 
-          the average change across observations. Calculating marginal effects at representative prespecified values is 
-          supported in R.This application only supports two way interactions ploting.")
+    message("This model has interactions so these interpretations are based on marginal effects, which are partial derivatives of the regression equation with respect to each variable. These marginal effects are calculated as the average change across observations. Calculating marginal effects at representative prespecified values is supported in R.This application only supports two way interactions ploting.")
 
     for (i in interactions) {
       
-   
- 
       
       # variable for two way interaction
       vars <- strsplit(i, ":")[[1]]
 
-      
-      
+    
       # this jus labels in order of the vector what are continous and what is a factor
       types <- sapply(vars, function(v) {
         if (is.numeric(model.frame(model)[[v]])) "cont" else "factor"
       })
-      
-      # ALWAYS ADD PLOT (one direction is enough)
-      inter_plot_list[[i]] <- ggemmeansplot(
-        model = model,
-        pred = vars[1],
-        moderator = vars[2]
-      )
-      
-      
       
       # --------------------------------------------------------
       # CONTINUOUS × CONTINUOUS use Johnson–Neyman (BOTH DIRECTIONS)
       # --------------------------------------------------------
       if (all(types == "cont") && length(vars) == 2) {
         
-        # A | B
-          res_ab <- jnplot(
-            model = model,
-            pred = vars[1],
-            moderator = vars[2],
-            alpha = alpha
-          )
-          
-          if (!is.null(res_ab)) {
-            inter_plot_list[[paste0(i, "_", vars[1], "_on_", vars[2])]] <- res_ab
-          }
-          
-          # B | A
-          res_ba <- jnplot(
-            model = model,
-            pred = vars[2],
-            moderator = vars[1],
-            alpha = alpha
-          )
-          
-          if (!is.null(res_ba)) {
-            inter_plot_list[[paste0(i, "_", vars[2], "_on_", vars[1])]] <- res_ba
-          }
         
-          interp_text <- paste0(
-            interp_text,
-            "\n\U2022  Johnson–Neyman analysis was conducted in both directions (",
-            vars[1], " <->", vars[2],
-            "), showing how each variable’s effect on the outcome varies across the other.",
-            "\n\nNOTE: The Johnson–Neyman plot is evaluated on the log(count) scale, not the response scale."
-          )
+        # -------------------------------------------------------
+        # 1. EMMEANS = RESPONSE SURFACE (cont | cont )
+        # -------------------------------------------------------
+        
+        # plot
+        inter_emmeans_plot_list[[paste0("emmeans_", i)]] <- ggemmeansplot(
+          model = model,
+          pred = vars[1],
+          moderator = vars[2]
+        )
+        
+        # emmeans table
+        em <- emmeans::emmeans(
+          model,
+          specs = as.formula(paste("~", vars[1], "|", vars[2])),
+          type = "response"
+        )
+        
+        em_tab <- as.data.frame(em)
+        names(em_tab) <- gsub("\\.scaled", "", names(em_tab))
+        
+        # store with clear label
+        inter_emmeans_table_list[[paste0("emmeans_", i)]] <- em_tab
+        
+        # text
+        inter_emmeans_text_list[[paste0("emmeans_", i)]] <- build_emmeans_text(
+          model = model,
+          mod.emmeans = em_tab,
+          pred = vars[1],
+          moderator = vars[2]
+        )
+        
+        #------------------ contrast table-------------
+        em_contrast_tab <- build_emmeanscontrasts_tab(
+          model = model,
+          pred = vars[1],
+          moderator = vars[2]
+        )
+        
+        inter_contrast_table_list[[paste0("emmeans_", i)]] <- em_contrast_tab
+        
+        # contrast text
+        inter_contrast_text_list[[paste0("emmeans_", i)]] <- build_emmeanscontrasts_text(
+          model = model,
+          mod.emmeanscontrast = em_contrast_tab,
+          pred = vars[1],
+          moderator = vars[2],
+          alpha = alpha
+        )
+        
+        
+        # -------------------------------------------------------
+        # 2. EMTRENDS = MARGINAL SLOPE (cat | cont)
+        # -------------------------------------------------------
+        
+        
+        key_trend <- paste0("emtrends_", i)
+        
+        
+        # trend table text and plot
+        em_trend_tab <- build_interaction_emtrends_tab(
+          model = model,
+          pred = vars[1],
+          moderator = vars[2]
+        )
+        inter_emtrends_table_list[[key_trend]] <- em_trend_tab
+        
+        inter_emtrends_text_list[[key_trend]] <-  build_interaction_emtrends_text(
+          model = model,
+          mod.emtrends = em_trend_tab,
+          pred = vars[1],
+          moderator = vars[2],
+          alpha = alpha
+        )
+        
+        
+        emtrendcontrast_tab <- build_emtrendcontrast_tab(model = model,
+                                                         pred = vars[1],
+                                                         moderator = vars[2])
+        
+        inter_emtrends_contrast_table_list[[key_trend]]  <-  emtrendcontrast_tab
+        inter_emtrends_contrast_text_list[[key_trend]]   <- build_emtrendcontrast_text( model = model,
+          mod.emtrendcontrast =  emtrendcontrast_tab,                                                                          
+          pred = vars[1],
+          moderator = vars[2],
+        alpha = alpha)
+        
+        
+        
+        
+        # A | B
+        res_ab <- jnplot(
+          model = model,
+          pred = vars[1],
+          moderator = vars[2]
+        )
+        
+        if (!is.null(res_ab)) {
+          inter_jn_plot_list[[paste0(i, "_", vars[1], "_on_", vars[2])]] <- res_ab
+        }
+        
+        # B | A
+        res_ba <- jnplot(
+          model = model,
+          pred = vars[2],
+          moderator = vars[1]
+        )
+        
+        if (!is.null(res_ba)) {
+          inter_jn_plot_list[[paste0(i, "_", vars[2], "_on_", vars[1])]] <- res_ba
+        }
+          
+          
+
+   
+        
       }
       
       
@@ -236,24 +336,105 @@ interp_ct <- function(model,alpha=0.05){
       # --------------------------------------------------------
       else if (any(types == "cont") && any(types == "factor") && length(vars) == 2) {
         
+        
+        
+       
         cont_var <- vars[types == "cont"]
         fac_var  <- vars[types == "factor"]
         
-        em <- emmeans::emtrends(
+        # -------------------------------------------------------
+        # 1. EMMEANS = RESPONSE SURFACE (cont | cat )
+        # -------------------------------------------------------
+        
+        em <- emmeans::emmeans(
           model,
-          specs = as.formula(paste("~", fac_var)),
-          var = cont_var
+          specs = as.formula(paste("~", cont_var, "|", fac_var)),
+          type = "response"
         )
         
-        # this turns the data into response scale
-        em_df <- as.data.frame(em)
+        em_tab <- as.data.frame(em)
+        names(em_tab) <- gsub("\\.scaled", "", names(em_tab))
         
-        # safe exponentiation (only meaningful for log-link models)
-        em_df$rr <- exp(em_df$trend)
-        em_df$rr_LCL <- exp(em_df$asymp.LCL)
-        em_df$rr_UCL <- exp(em_df$asymp.UCL)
+        key_emmeans <- paste0("emmeans_", cont_var, "_by_", fac_var)
         
-       
+        inter_emmeans_table_list[[key_emmeans]] <- em_tab
+        
+        inter_emmeans_text_list[[key_emmeans]] <- build_emmeans_text(
+          model = model,
+          mod.emmeans = em_tab,
+          pred = cont_var,
+          moderator = fac_var
+        )
+        
+        
+        # contrast table and text
+        em_contrast_tab <- build_emmeanscontrasts_tab(
+          model = model,
+          pred = cont_var,
+          moderator = fac_var
+        )
+        
+        inter_contrast_table_list[[key_emmeans]] <- em_contrast_tab
+        
+        inter_contrast_text_list[[key_emmeans]] <- build_emmeanscontrasts_text(
+          model = model,
+          mod.emmeanscontrast = em_contrast_tab,
+          pred = cont_var,
+          moderator = fac_var,
+          alpha = alpha
+        )
+        
+        
+        # -------------------------------------------------------
+        # 2. EMTRENDS = MARGINAL SLOPE (cat | cont)
+        # -------------------------------------------------------
+   
+        
+
+        
+      key_trend <- paste0("emtrends_", cont_var, "_by_", fac_var)
+      
+        
+      # trend table text and plot
+      em_trend_tab <- build_interaction_emtrends_tab(
+        model = model,
+        pred = cont_var,
+        moderator = fac_var
+      )
+      inter_emtrends_table_list[[key_trend]] <- em_trend_tab
+      
+      inter_emtrends_text_list[[paste0(cont_var, "_by_", fac_var)]] <-  build_interaction_emtrends_text(
+        model = model,
+        mod.emtrends = em_trend_tab,
+        pred = cont_var,
+        moderator = fac_var,
+        alpha = alpha
+      )
+      
+      # the plot for emmeans is the plot for trend as well
+      inter_emtrends_plot_list[[paste0(cont_var, "_by_", fac_var)]] <- ggemmeansplot(
+        model = model,
+        pred = cont_var,
+        moderator = fac_var
+      )
+      
+      
+      
+      emtrendcontrast_tab <- build_emtrendcontrast_tab(model = model,
+                                                       pred = vars[1],
+                                                       moderator = vars[2])
+      
+      inter_emtrends_contrast_table_list[[key_trend]]  <-  emtrendcontrast_tab
+      inter_emtrends_contrast_text_list[[key_trend]]   <- build_emtrendcontrast_text( model = model,
+                                                                                      mod.emtrendcontrast =  emtrendcontrast_tab,                                                                          
+                                                                                      pred = vars[1],
+                                                                                      moderator = vars[2], alpha = alpha)
+
+
+
+      
+
+      
       }
       
       # --------------------------------------------------------
@@ -261,22 +442,59 @@ interp_ct <- function(model,alpha=0.05){
       # --------------------------------------------------------
       
       if (all(types == "factor") && length(vars) == 2) {
-       
+        
+        
+        
+        # -------------------------------------------------------
+        # 1. EMMEANS = RESPONSE SURFACE (cat | cat )
+        # -------------------------------------------------------
+      
+        # plot
+        inter_emmeans_plot_list[[paste0("emmeans_", i)]] <- ggemmeansplot(
+          model = model,
+          pred = vars[1],
+          moderator = vars[2]
+        )
+        
+        # emmeans table
         em <- emmeans::emmeans(
           model,
           specs = as.formula(paste("~", vars[1], "|", vars[2])),
           type = "response"
         )
         
-        inter_text_list[[i]] <- build_emmeans_text(
+        em_tab <- as.data.frame(em)
+        names(em_tab) <- gsub("\\.scaled", "", names(em_tab))
+        
+        # store with clear label
+        inter_emmeans_table_list[[paste0("emmeans_", i)]] <- em_tab
+        
+        # text
+        inter_emmeans_text_list[[paste0("emmeans_", i)]] <- build_emmeans_text(
           model = model,
-          mod.emmeans = as.data.frame(em),
+          mod.emmeans = em_tab,
           pred = vars[1],
-          moderator = vars[2],
-          transform_type = "none"
+          moderator = vars[2]
         )
         
+        #------------------ contrast table-------------
+        em_contrast_tab <- build_emmeanscontrasts_tab(
+          model = model,
+          pred = vars[1],
+          moderator = vars[2]
+        )
         
+        inter_contrast_table_list[[paste0("emmeans_", i)]] <- em_contrast_tab
+        
+        # contrast text
+        inter_contrast_text_list[[paste0("emmeans_", i)]] <- build_emmeanscontrasts_text(
+          model = model,
+          mod.emmeanscontrast = em_contrast_tab,
+          pred = vars[1],
+          moderator = vars[2],
+          alpha = alpha
+        )
+  
       }
     }
   }
@@ -285,11 +503,37 @@ interp_ct <- function(model,alpha=0.05){
   
   #--------------------------Final Output-----------------------#
   
-  if (length(inter_text_list) > 0) {
-    interaction_text <- paste(unlist(inter_text_list), collapse = "\n\n")
+  if (length(inter_emmeans_text_list) > 0) {
+    inter_emmean_text <- paste(unlist(inter_emmeans_text_list), collapse = "\n\n")
   } else {
-    interaction_text <- ""
+    inter_emmean_text <- ""
   }
+  
+  if (length(inter_emtrends_text_list) > 0) {
+    inter_emtrends_text <- paste(unlist(inter_emmeans_text_list), collapse = "\n\n")
+  } else {
+    inter_emtrends_text <- ""
+  }
+  
+  
+  if (length(inter_contrast_text_list) > 0) {
+    inter_contrast_text <- paste(unlist(inter_contrast_text_list), collapse = "\n\n")
+  } else {
+    inter_contrast_text <- ""
+  }
+  
+  
+  if (length(inter_emtrends_contrast_text_list) > 0) {
+    inter_emtrends_contrast_text <- paste(unlist(inter_emtrends_contrast_text_list), collapse = "\n\n")
+  } else {
+    inter_emtrends_contrast_text <- ""
+  }
+  
+  
+  
+  
+
+
   
   text <- paste0(
     "----------------------Main Model Interpretation-----------------",
@@ -307,45 +551,56 @@ interp_ct <- function(model,alpha=0.05){
     
     "\n",disp_msg,
     "\n",interp_text,
-    "\n\n", "----------------------Interactions Interpretation-----------------",
-    interaction_text 
+    "\n\n", "----------------------Emmeans Interactions Interpretation--------------\n",
+     "\n",inter_emmean_text, 
+    "\n\n----------------------Emmeans Contrast Interpretation-----------------\n",
+    "\n", inter_contrast_text,
+    "\n\n----------------------Emmeans Trends Interpretation-----------------\n",
+    "\n",inter_emtrends_text,
+    "\n\n----------------------Emmtrends Contrast Interpretation-----------------\n",
+    "\n",inter_emtrends_contrast_text
+    
   )
   
   cat(text)
   
+  # IF display == True
 
+  if(display==TRUE){
+    cat("\n\n----------------------Emmeans Table-----------------\n")
+    lapply(inter_emmeans_table_list, print)
+
+    cat("\n\n----------------------Emmeans Contrast Table-----------------\n")
+    lapply(inter_contrast_table_list, print)
+    cat("\n\n----------------------Emtrends Table--------------------------\n")
+    lapply(inter_emtrends_table_list,print)
+    cat("\n\n----------------------Emtrends Contrast Table--------------------------\n")
+    lapply(inter_emtrends_contrast_table_list, print)
+                                      
+                                      
+    
+    #-------------All available plots-----------#
+    lapply(inter_emtrends_plot_list, print)
+    lapply(inter_emmeans_plot_list, print)
+    lapply(inter_jn_plot_list,print)
+        
+
+  }
   
+  return(list(
+    text = text,
+    emmeans_tables = inter_emmeans_table_list,
+    contrast_tables = inter_contrast_table_list,
+    contrast_text = inter_contrast_text_list,
+    plots = inter_emmeans_plot_list
+  ))
 }
 
+  
 
 
 
-response_var <- all.vars(formula(model))[1]
-names(model$model)[1]
 
 
-data <- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
-data$x2 <- rnorm(nrow(data) ,mean=0,sd=1)
-
-
-
-model <- fit_ct(
-  Kills ~  log(Age)*x2 ,
-  data = data,
-  family = "poisson"
-)
-
-interp_ct(model)
-
-coefs_raw <- coef(model)
-
-interactions <- names(coefs_raw)[grepl(":", coefs_raw)]
-
-beta <- coefs[name]
-model.frame(model)[[moderator]]
-
-  interactions <- coefs_raw[grepl(":", coefs_raw)]
-
-coef(model)
 
 

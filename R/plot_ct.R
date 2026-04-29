@@ -116,25 +116,3 @@ plot_ct <- function(data, response, group = NA, type = "barplot"){
   
 }
 
-
-# --------Some Cases When developing----------#
-# data(mpg,package = "ggplot2")
-# p1 <- plot_ct(mpg, "cyl", type = "boxplot")
-# p1
-# class(p1)
-# p2 <- plot_ct(mpg, "cyl", group = "class", type = "boxplot")
-# p2
-# 
-# p3 <- plot_ct(mpg, "cyl", type = "violin")
-# p3
-# 
-# p4 <- plot_ct(mpg, "cyl", group = "class", type = "violin")
-# p4
-# 
-# p5 <- plot_ct(mpg, "cyl", type = "barplot")
-# p5
-# 
-# p6 <- plot_ct(mpg, "cyl", group = "class", type = "barplot")
-# p6
-
-

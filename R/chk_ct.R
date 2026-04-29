@@ -1,86 +1,83 @@
 library(car)
 library(glue)
 library(DHARMa)
+library(patchwork)
 chk_ct <- function(model){
    
    # model family
    fam <- get_ct_family(model)
+   
 
   
-   if(fam %in% c("poisson","qpoisson","negbin")){
-     
-     # Condition 2, little to no multi-colinearity
-     
-     if(length(coef(model))<=2){
-       message("no vif reported: model contains fewer than 2 terms" )
-     }
-     else{
-       cat(vif_report(model))
-     }
-     
-
-
+   if(fam %in% c("poisson","qpoisson","negbin","glmnb","glmpoisson")){
+    
      # Condition 3 Enough count 
-     mod_dta <- model$data
-     y_ct <- mean(model$model[[1]])
+     
+     cat("#-------------Count Per Predictor Interpretation-------------#")
+     y_ct <- sum(model.response(model.frame(model)))
      Threshold <- 10 * length(coef(model))
      if(y_ct>=Threshold){
        message(" Total event counts is at least 10-20 events predictor variable")
-       
-     }
-     else{
+     }else{
        warning(" Total event counts is not at least 10-20 events predictor variable")
      }
      
      
+     
+     # Condition 2, little to no multi-colinearity
+     cat("#-------------VIF Model and Interpretation-------------#")
+     if(length(coef(model))<=2){
+       message("no vif reported: model contains fewer than 2 terms" )
+     }
+     else{
+       print(vif(model))
+       cat(vif_report(model))
+     }
      # Test Zero Inflation
      testZeroInflation(model)
      }
      
-   
    else if(fam %in% c("zip","zinb")){
      
     
      # Condition 1, little to no Multi-Colinearity
      
+     cat("#-------------VIF Model and Interpretation-------------#")
      if(length(model$coefficients$count)<=2){
        message("no vif reported model contains fewer than 2 terms" )
     
      }
      else{
        if(fam=="zip"){
+         print(vif(model))
          cat(vif_report(model))
          # car::vif(fit_ct(model$formula,model$model,family= "poisson"))
        }
        else if((fam=="zinb")){?
+         print(vif(model))
          cat(vif_report(model))
          # car::vif(fit_ct(model$formula,model$model,family= "zinb"))
        }
      }
-
-
      
      # Condition 2 Enough count for predictor
-     mod_dta <- model$data
-     y_ct <- mean(model$model[[1]])
+     y_ct <- sum(model.response(model.frame(model)))
      Threshold_count <- 10 * length(model$coefficients$count)
- 
-    
+      
+     cat("#-------------Count and Zero Per Predictor Interpretation-------------#")
 
      if(y_ct>=Threshold_count){
+       
        message(glue("Total event counts {y_ct} is at least 10 events predictor variable"))
      }
      else{
        warning(" Total event counts is not at least 10 events predictor variable")
      }
      
-
-     
      
      # Condition 3 Enough 0
-     mod_dta <- model$data
-     zero_ct <- sum(model$model[[1]]==0)
-     non_zero_ct <- sum(model$model[[1]]!=0)
+     zero_ct <- sum(model.response(model.frame(model))==0)
+     non_zero_ct <- sum(model.response(model.frame(model))!=0)
      Threshold_zero <- 10 * length(model$coefficients$zero)
 
      if(zero_ct>=Threshold_zero){
@@ -98,11 +95,13 @@ chk_ct <- function(model){
      if(non_zero_ct<Threshold_zero){
        warning(glue("Total nonzero event counts {non_zero_ct} is not at least 10 events predictor variable"))
      }
-   }
+   } 
    
    
    # Dispersion 
-   pearson.ratio <- sum(residuals(model, type = "pearson")^2) / model$df.residual
+   
+   cat("#-------------Dispersion Ratio Interpretation-------------#")
+   pearson.ratio <- sum(residuals(model, type = "pearson")^2) / df.residual(model)
    
    rec <- if (pearson.ratio > 1.5) {
      "Overdispersion -> consider Quasai Poisson or NegBin"
@@ -116,21 +115,27 @@ chk_ct <- function(model){
      "Recommendation: ", rec
    )
    
-   
-   # randomize quantile residual plot
+    # randomize quantile residual plot
+    message("random quantile residual is plotted\n")
     print(plt_rdr(model))
-    
     # pearson residual plot
+    message("random quantile residual is plotted\n")
     print(plt_pearson(model))
+    
+  if(fam %in% c("glmnb","glmpoisson")){
+    message("random effect plot is plotted\n")
+    print(plt_ref(model))
+  }
+    
+    
 
 }
 
 
 
-
 plt_rdr <- function(model){
   # from poisson
-  counts <- model$y
+  counts <- model.response(model.frame(model))
   lambdas <- fitted(model)
   # rqr <- statmod::qres.pois(crime_model) does the same job
   rqr <- rep(NA, length(lambdas))
@@ -158,7 +163,7 @@ plt_rdr <- function(model){
   }
   
   
-  pearson.ratio <- sum(residuals(model, type = "pearson")^2) / model$df.residual
+  pearson.ratio <- sum(residuals(model, type = "pearson")^2) / df.residual(model)
   p1 <- ggplot(data=tibble(lambda=lambdas,
                            e=rqr)) + 
     geom_hline(yintercept=0, linetype="dotted")+
@@ -182,7 +187,6 @@ plt_rdr <- function(model){
 
 plt_pearson <- function(model){
   
-  
   ggdat <- tibble(r2= resid(model, type = "pearson")^2,
                   lambdas = fitted(model))
   p1 <- ggplot(ggdat) + 
@@ -193,6 +197,101 @@ plt_pearson <- function(model){
     xlab(bquote(lambda)) +
     ylab(bquote(r^2))
   p1
+}
+
+
+
+plt_ref <- function(model){
+  
+  
+
+dat <- model.frame(model)
+dat <- dat |> mutate(y = model.response(dat))
+dat <- dat |>
+   mutate(y.hat = model.matrix(model) %*% fixef(model)$cond) |>
+   mutate(r.marginal =  - y.hat)
+
+
+subject <- names(ranef(model)$cond)
+# random terms
+re_mat <- ranef(model)$cond[[subject]]
+re_term <- setdiff(colnames(re_mat), "(Intercept)")
+Sigma.gamma <- as.matrix(VarCorr(model)$cond[[subject]]) # estimated covariance 
+subjects <- unique(dat[[subject]])
+  
+margres.dist <- tibble(subject = subjects,
+                       n = NA,
+                       MD = NA)
+
+for(i in 1:length(subjects)) {
+   # Take marginal residual vector for ith subject
+  curr.dat <- dat |>
+     filter(.data[[subject]] == subjects[[i]])
+  curr.margres <- curr.dat$r.marginal
+  curr.n <- nrow(curr.dat)
+  
+   # Compute Sigma_epsilon
+   var.r <- sigma(model)^2 # estimated conditional error variance
+   if(length(re_mat) ==1){
+    Zi <-rep(1, nrow(curr.dat))
+   } else if(length(re_mat)>1){
+     Zi <- cbind(1,  as.matrix(curr.dat[, re_term, drop = FALSE])) # 1 | x for random effects design
+   }
+
+  Sigma.epsilon.i <- Zi %*% Sigma.gamma %*% t(Zi) + diag(var.r, nrow(curr.dat))
+   # Compute Distance
+   margres.dist$MD[i] = t(curr.margres) %*% solve(Sigma.epsilon.i) %*% curr.margres
+   margres.dist$n[i] = curr.n
+}
+
+
+degree_of_freedom <- unique(margres.dist$n)
+if(length(degree_of_freedom) > 1){
+  message(
+    "Degrees of freedom vary across subject ",
+    "Mahalanobis distances do not follow a single chi-square distribution. ",
+    "A direct chi-square QQ plot would be invalid; transformed (uniform/normal) QQ plots are used instead."
+  )
+  margres.dist <- margres.dist |>
+    rowwise() |>
+    mutate(prob = pchisq(q = MD, df = n, lower.tail = F)) |>
+    mutate(z = qnorm(1 - prob))
+  
+  p1 <- ggplot(margres.dist) +
+    stat_qq(aes(sample = prob), distribution = qunif) +
+    stat_qq_line(aes(sample = prob)) +
+    theme_bw()+
+    labs(
+      title = "QQ Plot (Uniform[0,1])",
+      x = "Theoretical Quantiles (Uniform[0,1])",
+      y = "Observed Quantiles"
+    )
+  
+  p2<- ggplot(margres.dist) +
+    stat_qq(aes(sample = z)) +
+    stat_qq_line(aes(sample = z)) +
+    theme_bw()  +
+    labs(
+      title = "QQ Plot (Standard Normal)",
+      x = "Theoretical Quantiles (Normal)",
+      y = "Observed Quantiles"
+    )
+  
+  p1 | p2
+} else{
+  df <- degree_of_freedom[1]
+  
+  p1 <- ggplot(data = tibble(MD = margres.dist$MD)) +
+     stat_qq(aes(sample = MD),
+               distribution = qchisq,
+               dparams=list(df=df))+
+     stat_qq_line(aes(sample = MD),
+                    distribution = qchisq,
+                    dparams=list(df=df)) +
+    theme_bw()+
+    ylab("Observed Quantile") +
+    xlab("Theoretical Quantile")
+}
 }
 
 
@@ -225,7 +324,11 @@ vif_report <- function(model) {
 
 
 
-
+model2 <- glmmTMB(
+  y ~ mpg + cyl + offset(log(exposure)) + (1 | gear),
+  data = data,
+  family = poisson()
+)
 
 
 # check this

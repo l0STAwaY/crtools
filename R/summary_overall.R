@@ -12,7 +12,7 @@ library(dplyr)
 #' summary_overall(mpg)
 #' 
 #' 
-summary_overall <- function(data, na.rm = TRUE) {
+summary_overall <- function(data, na.rm = TRUE,ggpair=TRUE) {
   # return a vector get all numeric data and summarize them
   # these are continous summaries
   # summary table of all the statistics
@@ -23,6 +23,11 @@ summary_overall <- function(data, na.rm = TRUE) {
   if (ncol(num_data) == 0) {
     stop("No numeric columns found")
   }
+  
+  if(ggpair==TRUE){
+    print(make_ggpairs_plot(data))
+  }
+  
   
   summary_data <- tibble(
     variable = names(num_data),
@@ -39,13 +44,3 @@ summary_overall <- function(data, na.rm = TRUE) {
   
   return(summary_data)
 }
-
-
-
-# --------Some Cases When developing----------
-#
-# data(mpg, package = "ggplot2")
-# 
-# summary_overall(mpg)
-# 
-# 

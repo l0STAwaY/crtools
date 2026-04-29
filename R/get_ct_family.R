@@ -63,8 +63,16 @@ get_ct_family <- function(model) {
       return("zip")
     } else if (model$dist == "negbin") {
       return("zinb")
+    } 
+  }  else if(inherits(model, "glmmTMB")) {
+    
+    fam <- family(model)$family
+
+    
+    if (fam == "poisson") {return("glmpoisson")}else if (fam=="nbinom2"){
+      return("glmnb")
     }
-  }
+  } 
   
   return(NA)
 }

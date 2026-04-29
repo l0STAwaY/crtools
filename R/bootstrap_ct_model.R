@@ -86,15 +86,3 @@ bootstrap_ct_model <- function(model, B = 100) {
     ci = ci
   ))
 }
-
-
-# 
-# data<- read.csv("../Private_Dataset/McMillanAcheMonkeyTrips.csv")
-# model <- fit_ct(Kills~Age+offset(TripDays),data,family="zip")
-# names(model$model)
-# formula(model)
-# model.frame(model)
-# offset_vec <- model$offset
-# res <- bootstrap_ct_model(model, B = 200)
-# head(res$raw)
-# res$ci

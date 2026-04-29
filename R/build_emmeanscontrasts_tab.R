@@ -1,8 +1,25 @@
 library(magrittr)
-  build_emmeanscontrasts <- function(model, pred, moderator, grid_n = 25){
-  
+#' Build Emmeans Contrasts
+#' Computes pairwise contrasts of estimated marginal means (EMMs)
+#' from a fitted regression model with interactions.
+#'
+#' @param model Fitted model object (must support emmeans).
+#' @param pred Name of predictor variable (character string).
+#' @param moderator Name of moderator variable (character string).
+#'
+#' @return Data frame of pairwise contrasts including estimates,
+#' standard errors, test statistics, p-values, and confidence intervals.
+#'
+#' @details
+#' Handles both continuous and factor variables. Continuous variables
+#' are evaluated at approximately ±1 standard deviation from the mean.
+#' Results are reported on the response scale.
+#'
+#' @examples
+#' model <- fit_ct(y ~ hp * mpg, data = mtcars, family = "negbin")
+#' build_emmeanscontrasts(model, pred = "hp", moderator = "mpg")
+build_emmeanscontrasts_tab <- function(model, pred, moderator){
   data <- model.frame(model)
-  
   # ---------------- variable types ----------------
   pred_type <- if (is.numeric(data[[pred]])) "cont" else "factor"
   mod_type  <- if (is.numeric(data[[moderator]])) "cont" else "factor"
@@ -38,7 +55,7 @@ library(magrittr)
       mod.emmeanscontrast <- mod.emmeanscontrast %>%
         dplyr::select(-any_of("null"))%>%
         set_rownames(NULL) %>%
-        set_colnames(c("Contrast", "Estimate", "SE", "df", "t ratio", "p-value", "Lower CI", "Upper CI"))
+        set_colnames(c("Contrast", "Estimate", "SE", "df", "z ratio", "p-value", "Lower CI", "Upper CI"))
 
   }
   
@@ -61,7 +78,7 @@ library(magrittr)
       mod.emmeanscontrast <- mod.emmeanscontrast %>%
         dplyr::select(-any_of("null"))%>%
         set_rownames(NULL) %>%
-        set_colnames(c("Contrast", "Estimate", "SE", "df", "t ratio", "p-value", "Lower CI", "Upper CI"))
+        set_colnames(c("Contrast", "Estimate", "SE", "df", "z ratio", "p-value", "Lower CI", "Upper CI"))
  
   }else{ 
     if(mod_type=="factor"){
@@ -82,17 +99,15 @@ library(magrittr)
         mod.emmeanscontrast$upper.CL<-mod.emmeanscontrastci$asymp.UCL
         
         mod.emmeanscontrast$contrast <- gsub("\\.scaled", "", mod.emmeanscontrast$contrast)
-        print(mod.emmeanscontrast)
         "####################################"
         "# Clean Up Labels for Printing"
         "####################################"
         mod.emmeanscontrast <- mod.emmeanscontrast %>%
           dplyr::select(-any_of("null"))%>%
           set_rownames(NULL) %>%
-          set_colnames(c("Contrast", "Estimate", "SE", "df", "t ratio", "p-value", "Lower CI", "Upper CI"))
+          set_colnames(c("Contrast", "Estimate", "SE", "df", "z ratio", "p-value", "Lower CI", "Upper CI"))
 
     }else{
-
         "####################################"
         "# Calculate Marginal Effects"
         "####################################"
@@ -115,11 +130,10 @@ library(magrittr)
         "####################################"
         "# Clean Up Labels for Printing"
         "####################################"
-        print(mod.emmeanscontrast)
         mod.emmeanscontrast <- mod.emmeanscontrast %>%
           dplyr::select(-any_of("null"))%>%
           set_rownames(NULL) %>%
-          set_colnames(c("Contrast", "Estimate", "SE", "df", "t ratio", "p-value", "Lower CI", "Upper CI"))
+          set_colnames(c("Contrast", "Estimate", "SE", "df", "z ratio", "p-value", "Lower CI", "Upper CI"))
     }
   }
   }  
@@ -127,7 +141,6 @@ library(magrittr)
   
   
 
-  
   
   
  
