@@ -20,7 +20,7 @@
 #' build_trends_tab(model, pred = "hp", moderator = "vs")
 build_emtrendcontrast_tab <- function(model, pred, moderator) {
   
-  data <- model.frame(model)
+  data <- if (!is.null(model$org_data)) model$org_data else model.frame(model)
   # ---------------- variable types ----------------
   pred_type <- if (is.numeric(data[[pred]])) "cont" else "factor"
   mod_type  <- if (is.numeric(data[[moderator]])) "cont" else "factor"
@@ -34,7 +34,7 @@ build_emtrendcontrast_tab <- function(model, pred, moderator) {
     modvarat<-list(c(round(m-s,2), round(m+s,2)))
     names(modvarat)<-c(moderator)
     
-    mod.emtrends<-emtrends(object = model, spec=moderator, var=pred, at=modvarat)
+    mod.emtrends<-emtrends(object = model, spec=moderator, var=pred, at=modvarat,data=data)
 
     mod.emtrendcontrast <- data.frame(pairs(mod.emtrends))
     mod.emmeanscontrastci <-data.frame(confint(pairs(mod.emtrends)))
@@ -65,7 +65,7 @@ build_emtrendcontrast_tab <- function(model, pred, moderator) {
       "# Calculate Marginal Effects"
       "####################################"
       
-       mod.emtrends<-emtrends(model, spec = moderator, var = pred)
+       mod.emtrends<-emtrends(model, spec = moderator, var = pred,data=data)
        mod.emtrendcontrast <- as.data.frame(pairs(mod.emtrends))
        mod.emmeanscontrastci <-data.frame(confint(pairs(mod.emtrends)))
        mod.emtrendcontrast$lower.CL<-mod.emmeanscontrastci$asymp.LCL

@@ -30,7 +30,7 @@ build_emmeanscontrasts_text <- function(model, mod.emmeanscontrast, pred, modera
   }
   
   # ---------------- response varaible ----------------
-  data <-model.frame(model)
+  data <- if (!is.null(model$org_data)) model$org_data else model.frame(model)
   pred_type <- if (is.numeric(data[[pred]])) "cont" else "factor"
   mod_type  <- if (is.numeric(data[[moderator]])) "cont" else "factor"
   response <- all.vars(formula(model))[1]

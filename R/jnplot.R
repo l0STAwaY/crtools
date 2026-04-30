@@ -15,7 +15,7 @@
 #' @export
 jnplot <- function(model,pred,moderator,control.fdr = TRUE) {
   
-  data <- model.frame(model)
+  data <- if (!is.null(model$org_data)) model$org_data else model.frame(model)
   pred_type <- if (is.numeric(data[[pred]])) "cont" else "factor"
   mod_type  <- if (is.numeric(data[[moderator]])) "cont" else "factor"
   fam <- get_ct_family(model)

@@ -22,7 +22,7 @@ library(ggeffects)
 #' model <- fit_ct(y ~ hp * mpg, data = mtcars, family = "negbin")
 #' build_emmeanscontrasts(model, pred = "hp", moderator = "mpg")
 build_emmeanscontrasts_tab <- function(model, pred, moderator){
-  data <- model.frame(model)
+  data <- if (!is.null(model$org_data)) model$org_data else model.frame(model)
   # ---------------- variable types ----------------
   pred_type <- if (is.numeric(data[[pred]])) "cont" else "factor"
   mod_type  <- if (is.numeric(data[[moderator]])) "cont" else "factor"
@@ -41,7 +41,7 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
                      c(round(m.var-s.var,2), round(m.var+s.var,2)))
       names(modvarat)<-c(moderator, pred)
       
-      mod.emmeans<-emmeans(object = model, spec=c(pred, moderator), var=pred, at=modvarat, type="response")
+      mod.emmeans<-emmeans(object = model, spec=c(pred, moderator), var=pred, at=modvarat, type="response",data=data)
       mod.emmeans <- add_grouping(mod.emmeans, "pred", pred , c(paste("(Low ", pred,")", sep=""), paste("(High ", pred,")", sep="")))
       mod.emmeans <- add_grouping(mod.emmeans, "moderator", moderator , c(paste("(Low ", moderator,")", sep=""), paste("(High ", moderator,")", sep="")))
       
@@ -67,7 +67,7 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
       "####################################"
       "# Calculate Marginal Effects"
       "####################################"
-      mod.emmeans<-emmeans(model, specs = c(pred,moderator), var=moderator, type="response")
+      mod.emmeans<-emmeans(model, specs = c(pred,moderator), var=moderator, type="response",data=data)
       mod.emmeanscontrast <-data.frame(pairs(mod.emmeans))
       mod.emmeanscontrastci<-data.frame(confint(pairs(mod.emmeans)))
       mod.emmeanscontrast$lower.CL<-mod.emmeanscontrastci$asymp.LCL
@@ -94,7 +94,7 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
         modvarat<-list(c(round(m-s,2), round(m+s,2)))
         names(modvarat)<-c(pred)
         
-        mod.emmeans <- emmeans(model, specs = c(moderator,pred), var=moderator, at=modvarat, type="response")
+        mod.emmeans <- emmeans(model, specs = c(moderator,pred), var=moderator, at=modvarat, type="response",data=data)
         mod.emmeans <- add_grouping(mod.emmeans, "pred", pred ,  c(paste("(Low ",pred,")", sep=""), paste("(High ",pred,")", sep="")))
         mod.emmeanscontrast <-data.frame(pairs(mod.emmeans))
         mod.emmeanscontrastci<-data.frame(confint(pairs(mod.emmeans)))
@@ -120,7 +120,7 @@ build_emmeanscontrasts_tab <- function(model, pred, moderator){
         modvarat<-list(c(round(m-s,2), round(m+s,2)))
         names(modvarat)<-c(moderator)
         
-        mod.emmeans <- emmeans(model, specs = c(moderator, pred), var=moderator, at=modvarat, type="response")
+        mod.emmeans <- emmeans(model, specs = c(moderator, pred), var=moderator, at=modvarat, type="response",data=data)
         mod.emmeans <- add_grouping(mod.emmeans, "moderator", moderator ,  c(paste("(Low ",moderator,")", sep=""), paste("(High ",moderator,")")))
         mod.emmeanscontrast <-data.frame(pairs(mod.emmeans))
         

@@ -5,6 +5,8 @@ library(patchwork)
 chk_ct <- function(model){
    
    # model family
+
+  
    fam <- get_ct_family(model)
    
 
@@ -13,65 +15,66 @@ chk_ct <- function(model){
     
      # Condition 3 Enough count 
      
-     cat("#-------------Count Per Predictor Interpretation-------------#")
+     cat("#--------------------Count Per Predictor Interpretation----------------------#\n")
      y_ct <- sum(model.response(model.frame(model)))
      Threshold <- 10 * length(coef(model))
      if(y_ct>=Threshold){
-       message(" Total event counts is at least 10-20 events predictor variable")
+       cat(" Total event counts is at least 10-20 events predictor variable\n")
      }else{
-       warning(" Total event counts is not at least 10-20 events predictor variable")
+       cat(" Total event counts is not at least 10-20 events predictor variable\n")
      }
      
      
      
      # Condition 2, little to no multi-colinearity
-     cat("#-------------VIF Model and Interpretation-------------#")
+     cat("#---------------------------VIF Model and Interpretation---------------------#")
      if(length(coef(model))<=2){
        message("no vif reported: model contains fewer than 2 terms" )
      }
      else{
-       print(vif(model))
+       print(performance::check_collinearity(model))
+       cat("\n")
        cat(vif_report(model))
      }
+
      # Test Zero Inflation
-     testZeroInflation(model)
+     if (fam %in% c("qpoisson")){
+       message("testZeroInflation does not support qpoisson family, no zero inflation test reported")
+     } else{ 
+       message("Zero Inflation Simulation Plot is Plotted" )
+       testZeroInflation(model)
      }
+     
+   }
      
    else if(fam %in% c("zip","zinb")){
      
     
      # Condition 1, little to no Multi-Colinearity
      
-     cat("#-------------VIF Model and Interpretation-------------#")
+     cat("#------------------------------VIF Model and Interpretation-------------------------#\n")
      if(length(model$coefficients$count)<=2){
        message("no vif reported model contains fewer than 2 terms" )
     
-     }
-     else{
-       if(fam=="zip"){
-         print(vif(model))
-         cat(vif_report(model))
-         # car::vif(fit_ct(model$formula,model$model,family= "poisson"))
-       }
-       else if((fam=="zinb")){?
-         print(vif(model))
+     }else{
+         print(performance::check_collinearity(model))
          cat(vif_report(model))
          # car::vif(fit_ct(model$formula,model$model,family= "zinb"))
        }
-     }
+
      
      # Condition 2 Enough count for predictor
      y_ct <- sum(model.response(model.frame(model)))
      Threshold_count <- 10 * length(model$coefficients$count)
       
-     cat("#-------------Count and Zero Per Predictor Interpretation-------------#")
+     cat("#----------------------------Count and Zero Per Predictor Interpretation----------------#")
 
      if(y_ct>=Threshold_count){
        
-       message(glue("Total event counts {y_ct} is at least 10 events predictor variable"))
+       cat(glue("Total event counts {y_ct} is at least 10 events predictor variable"))
      }
      else{
-       warning(" Total event counts is not at least 10 events predictor variable")
+       cat(" Total event counts is not at least 10 events predictor variable")
      }
      
      
@@ -100,26 +103,31 @@ chk_ct <- function(model){
    
    # Dispersion 
    
-   cat("#-------------Dispersion Ratio Interpretation-------------#")
+   cat("\n#-----------------------------Dispersion Ratio Interpretation--------------------#\n")
    pearson.ratio <- sum(residuals(model, type = "pearson")^2) / df.residual(model)
    
    rec <- if (pearson.ratio > 1.5) {
-     "Overdispersion -> consider Quasai Poisson or NegBin"
+     "Overdispersion (dispersion ratio > 1.5) -> consider Quasi-Poisson or Negative Binomial"
    } else if (pearson.ratio < 0.7) {
-     "Underdispersion -> consider Poisson"
+     "Underdispersion (dispersion ratio < 0.7) -> consider Poisson may be appropriate, but check model fit"
    } else {
-     "Dispersion OK -> Poisson reasonable"
+     "Dispersion is acceptable (0.7 <= dispersion ratio <= 1.5) -> Poisson model is reasonable"
    }
    
    label_text <- paste0(
-     "Recommendation: ", rec
+     "Dispersion ratio (Pearson chi-square / df) = ",
+     round(pearson.ratio, 3),
+     ". ",
+     rec
    )
+   cat(label_text)
    
     # randomize quantile residual plot
     message("random quantile residual is plotted\n")
+    message("person residual is plotted\n")
     print(plt_rdr(model))
     # pearson residual plot
-    message("random quantile residual is plotted\n")
+   
     print(plt_pearson(model))
     
   if(fam %in% c("glmnb","glmpoisson")){
@@ -295,29 +303,69 @@ if(length(degree_of_freedom) > 1){
 }
 
 
-
 vif_report <- function(model) {
   
-  VIF <- vif(model)
+  vif_df <- suppressMessages(
+    suppressWarnings(
+      performance::check_collinearity(model)
+    )
+  )  
+
+  is_interaction <- grepl(":", vif_df$Term)
+  
+  interaction_terms <- vif_df$Term[is_interaction]
+  
+  interaction_vars <- unique(unlist(strsplit(interaction_terms, ":")))
+  
+  # keep ONLY variables NOT involved in ANY interaction
+  vif_main <- vif_df[!vif_df$Term %in% c(interaction_vars,interaction_terms), ]
+  
+  
+  VIF <- vif_main$VIF
+  names(VIF) <- vif_main$Term
+  
   vartext2 <- ""
   
   if (any(VIF > 5)) {
     
-    vartext2 <- "We calculated the Variance Inflation Factor (VIF) to assess collinearity of the model -- "
-    viftext <- paste("VIF(", names(VIF), ")=", round(VIF, 2), sep = "")
+    vartext2 <- "\n-- We calculated the Variance Inflation Factor (VIF) for MAIN EFFECTS ONLY(exluding interaction and lower term). --\n"
     
-    if (sum(VIF > 5) == 1) {
-      vartext2<-paste(vartext2, viftext, " has high VIF, indicating that collinearity may be an issue. You might consider standardizing your data or using a regularization method like ridge regression or LASSO.")
+    viftext <- paste0("VIF(", names(VIF), ")=", round(VIF, 2))
+    
+    high <- VIF > 5
+    
+    if (sum(high) == 1) {
+      
+      vartext2 <- paste0(
+        vartext2,
+        viftext[high],
+        " has high VIF, indicating potential multicollinearity among main effects."
+      )
+      
     } else {
       
-      viftext <- paste(paste(viftext[-length(viftext)], collapse = ", ")," and ",viftext[length(viftext)],sep = "")
-      vartext2<-paste(vartext2, viftext, " have high VIF, indicating that collinearity may be an issue. You might consider standardizing your data or using a regularization method like ridge regression or LASSO.")
+      viftext_hi <- viftext[high]
+      
+      viftext_hi <- paste(
+        paste(viftext_hi[-length(viftext_hi)], collapse = ", "),
+        "and",
+        viftext_hi[length(viftext_hi)]
+      )
+      
+      vartext2 <- paste0(
+        vartext2,
+        viftext_hi,
+        " have high VIF, indicating potential multicollinearity among main effects."
+      )
     }
     
   } else {
-    vartext2<-paste(vartext2, "We calculated the Variance Inflation Factor (VIF) to assess collinearity of the model. None of the calculated VIFs were larger than five, indicating that collinearity may not be an issue.", sep="")
+    
+    vartext2 <- paste0(
+      vartext2,
+      "No VIF exceeded 5, suggesting no serious multicollinearity among non-interaction predictors."
+    )
   }
-  
+
   return(vartext2)
 }
-

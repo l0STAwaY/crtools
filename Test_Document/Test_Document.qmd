@@ -51,16 +51,18 @@ set.seed(123)
 # data <- read.csv("../Dataset/McMillanAcheMonkeyTrips.csv")
 
 # I used mtcars since and made artifical data instead
-data <- mtcars
-data$vs <- as.factor(data$vs)
-data$am <- as.factor(mtcars$am)
+data3 <- mtcars
+data3$vs <- as.factor(data3$vs)
+data3$am <- as.factor(mtcars$am)
 
 # make a proper count outcome
-data$y <- rpois(nrow(data), lambda = exp(scale(data$hp)))
-data$exposure <- data$hp + 1
+data3$y <- rpois(nrow(data3), lambda = exp(scale(data3$hp)))
+data3$exposure <- data3$hp + 1
 # add zero inflation
-zero_idx <- sample(1:nrow(data), size = 5)
-data$y[zero_idx] <- 0
+zero_idx <- sample(1:nrow(data3), size = 5)
+data3$y[zero_idx] <- 0
+
+
 
 
 #===========================
@@ -69,23 +71,37 @@ data$y[zero_idx] <- 0
 
 
 
-m1 <- fit_ct(y ~ hp * vs, data = data, family = "poisson")
+m1 <- fit_ct(y ~ hp * vs, data= data3, family = "poisson")
 ggemmeansplot(m1, pred = "hp", moderator = "vs")
 emmeans(m1, ~ hp | vs, type = "response") # check if ggemeansplot give information on response scale
 ggemmeansplot(m1, pred = "vs", moderator = "hp")
 
-m2 <-  fit_ct(y ~ hp * vs, data = data, family = "negbin")
+m2 <-  fit_ct(y ~ hp * vs, data= data3, family = "negbin")
 ggemmeansplot(m2, pred = "hp", moderator = "vs")
 
-m3 <-  fit_ct(y ~ hp * vs, data = data, family = "qpoisson")
+m2_log <-  fit_ct(y ~ log(hp) * vs, data= data3, family = "negbin")
+ggemmeansplot(m2_log, pred = "vs", moderator = "hp") # original ter
+
+
+m3 <-  fit_ct(y ~ hp * vs, data= data3, family = "qpoisson")
 ggemmeansplot(m3, pred = "hp", moderator = "vs")
 
 
-m4 <-  fit_ct(y ~ hp * vs, data = data, family = "zip")
+# error case
+m3_log <-  fit_ct(y ~ log(hp) * vs, data= data3, family = "qpoisson")
+
+ggemmeansplot(m3_log, pred = "vs", moderator = "hp") # original ter
+
+
+
+m4 <-  fit_ct(y ~ hp * vs, data= data3, family = "zip")
 ggemmeansplot(m4, pred = "hp", moderator = "vs")
 
+m4_log <-  fit_ct(y ~ log(hp) * vs, data= data3, family = "zip")
+ggemmeansplot(m4_log, pred = "vs", moderator = "hp") # original ter
 
-m5 <-  fit_ct(y ~ hp * vs, data = data, family = "zinb")
+
+m5 <-  fit_ct(y ~ hp * vs, data= data3, family = "zinb")
 ggemmeansplot(m5, pred = "hp", moderator = "vs")
 
 ggemmeansplot(m5, pred = "vs", moderator = "hp")
@@ -95,7 +111,7 @@ ggemmeansplot(m5, pred = "vs", moderator = "hp")
 # with offset one from each should be enough
 m1_off <- fit_ct(
   y ~ hp * vs + offset(log(exposure)),
-  data = data,
+  data= data3,
   family = "poisson"
 )
 ggemmeansplot(m1_off, pred = "hp", moderator = "vs")
@@ -103,7 +119,7 @@ ggemmeansplot(m1_off, pred = "hp", moderator = "vs")
 
 m5_off <- fit_ct(
   y ~ hp * vs + offset(log(exposure)),
-  data = data,
+  data= data3,
   family = "zinb"
 )
 ggemmeansplot(m5_off, pred = "hp", moderator = "vs")
@@ -112,59 +128,59 @@ ggemmeansplot(m5_off, pred = "hp", moderator = "vs")
 
 # categorical x categorical
 
-m6 <- fit_ct(y ~ vs * am, data = data, family = "poisson")
+m6 <- fit_ct(y ~ vs * am, data= data3, family = "poisson")
 ggemmeansplot(m6, pred = "vs", moderator = "am")
 
-m7 <- fit_ct(y ~ vs * am, data = data, family = "negbin")
+m7 <- fit_ct(y ~ vs * am, data= data3, family = "negbin")
 ggemmeansplot(m7, pred = "vs", moderator = "am")
 
-m8 <- fit_ct(y ~ vs * am, data = data, family = "qpoisson")
+m8 <- fit_ct(y ~ vs * am, data= data3, family = "qpoisson")
 ggemmeansplot(m8, pred = "vs", moderator = "am")
   
   
-m9 <-  fit_ct(y ~ vs * am, data = data, family = "zip")
+m9 <-  fit_ct(y ~ vs * am, data= data3, family = "zip")
 ggemmeansplot(m9, pred = "vs", moderator = "am")
 
 # I forgot the zinb case
-m15 <- fit_ct(y ~ vs * am, data = data, family = "zinb")
+m15 <- fit_ct(y ~ vs * am, data= data3, family = "zinb")
 ggemmeansplot(m15, pred = "vs", moderator = "am")
 
 
 
-m6_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data = data, family = "poisson")
+m6_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data= data3, family = "poisson")
 ggemmeansplot(m6_off, pred = "vs", moderator = "am")
 
 
 
 # cont vs cont
 
-m10 <- fit_ct(y ~ hp * mpg, data = data, family = "poisson")
+m10 <- fit_ct(y ~ hp * mpg, data= data3, family = "poisson")
 ggemmeansplot(m10, pred = "hp", moderator = "mpg")
 
-m11 <- fit_ct(y ~ hp * mpg, data = data, family = "negbin")
+m11 <- fit_ct(y ~ hp * mpg, data= data3, family = "negbin")
 ggemmeansplot(m11, pred = "hp", moderator = "mpg")
 
-m12 <- fit_ct(y ~ hp * mpg, data = data, family = "qpoisson")
+m12 <- fit_ct(y ~ hp * mpg, data= data3, family = "qpoisson")
 ggemmeansplot(m12, pred = "hp", moderator = "mpg")
 
-m13 <- fit_ct(y ~ hp * mpg, data = data, family = "zip")
+m13 <- fit_ct(y ~ hp * mpg, data= data3, family = "zip")
 ggemmeansplot(m13, pred = "hp", moderator = "mpg")
 
-m14 <- fit_ct(y ~ hp * mpg, data = data, family = "zinb")
+m14 <- fit_ct(y ~ hp * mpg, data= data3, family = "zinb")
 ggemmeansplot(m14, pred = "hp", moderator = "mpg")
 
 
 
 m10_off <- fit_ct(
   y ~ hp * mpg + offset(log(exposure)),
-  data = data,
+  data= data3,
   family = "poisson"
 )
 ggemmeansplot(m10_off, pred = "hp", moderator = "mpg")
 
 m14_off <- fit_ct(
   y ~ hp * mpg + offset(log(exposure)),
-  data = data,
+  data= data3,
   family = "zinb"
 )
 ggemmeansplot(m14_off, pred = "hp", moderator = "mpg")
@@ -175,44 +191,44 @@ ggemmeansplot(m14_off, pred = "hp", moderator = "mpg")
 
 
 # cont cont
-m17 <- fit_ct(y ~ hp * mpg, data = data, family = "glmpoisson")
+m17 <- fit_ct(y ~ hp * mpg, data= data3, family = "glmpoisson")
 ggemmeansplot(m17, pred = "hp", moderator = "mpg")
 
-m18 <- fit_ct(y ~ hp * mpg, data = data, family = "glmnb")
+m18 <- fit_ct(y ~ hp * mpg, data= data3, family = "glmnb")
 ggemmeansplot(m18, pred = "hp", moderator = "mpg")
 
-m17_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data = data, family = "glmpoisson")
+m17_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data= data3, family = "glmpoisson")
 ggemmeansplot(m17_off, pred = "hp", moderator = "mpg")
 
-m18_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data = data, family = "glmnb")
+m18_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data= data3, family = "glmnb")
 ggemmeansplot(m18_off, pred = "hp", moderator = "mpg")
 
 
 # cat cat
-m19 <- fit_ct(y ~ vs * am, data = data, family = "glmpoisson")
+m19 <- fit_ct(y ~ vs * am, data= data3, family = "glmpoisson")
 ggemmeansplot(m19, pred = "vs", moderator = "am")
 
-m20 <- fit_ct(y ~ vs * am, data = data, family = "glmnb")
+m20 <- fit_ct(y ~ vs * am, data= data3, family = "glmnb")
 ggemmeansplot(m20, pred = "vs", moderator = "am")
 
-m19_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data = data, family = "glmpoisson")
+m19_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data= data3, family = "glmpoisson")
 ggemmeansplot(m19_off, pred = "vs", moderator = "am")
 
-m20_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data = data, family = "glmnb")
+m20_off <- fit_ct(y ~ vs * am + offset(log(exposure)), data= data3, family = "glmnb")
 ggemmeansplot(m20_off, pred = "vs", moderator = "am")
 
 # cat cont
 
-m21 <- fit_ct(y ~ hp * vs, data = data, family = "glmpoisson")
+m21 <- fit_ct(y ~ hp * vs, data= data3, family = "glmpoisson")
 ggemmeansplot(m21, pred = "hp", moderator = "vs")
 
-m22 <- fit_ct(y ~ hp * vs, data = data, family = "glmnb")
+m22 <- fit_ct(y ~ hp * vs, data= data3, family = "glmnb")
 ggemmeansplot(m22, pred = "hp", moderator = "vs")
 
-m21_off <- fit_ct(y ~ hp * vs + offset(log(exposure)), data = data, family = "glmpoisson")
+m21_off <- fit_ct(y ~ hp * vs + offset(log(exposure)), data= data3, family = "glmpoisson")
 ggemmeansplot(m21_off, pred = "hp", moderator = "vs")
 
-m22_off <- fit_ct(y ~ hp * vs + offset(log(exposure)), data = data, family = "glmnb")
+m22_off <- fit_ct(y ~ hp * vs + offset(log(exposure)), data= data3, family = "glmnb")
 ggemmeansplot(m22_off, pred = "hp", moderator = "vs")
 
 
@@ -220,48 +236,39 @@ ggemmeansplot(m22_off, pred = "hp", moderator = "vs")
 
 # refit with random effect specified
 # cont cont
-m17 <- fit_ct(y ~ hp * mpg + (1 | vs), data = data, family = "glmpoisson")
+m17 <- fit_ct(y ~ hp * mpg + (1 | vs), data= data3, family = "glmpoisson")
 
-m18 <- fit_ct(y ~ hp * mpg + (1 | gear), data = data, family = "glmnb")
+m18 <- fit_ct(y ~ hp * mpg + (1 | gear), data= data3, family = "glmnb")
 
-m17_off <- fit_ct(y ~ hp * mpg + (1 | gear) + offset(log(exposure)), data = data, family = "glmpoisson")
+m17_off <- fit_ct(y ~ hp * mpg + (1 | gear) + offset(log(exposure)), data= data3, family = "glmpoisson")
 
-m18_off <- fit_ct(y ~ hp * mpg + (1 | gear) + offset(log(exposure)), data = data, family = "glmnb")
+m18_off <- fit_ct(y ~ hp * mpg + (1 | gear) + offset(log(exposure)), data= data3, family = "glmnb")
 
 
 # cat cat
-m19 <- fit_ct(y ~ vs * am + (1 | gear), data = data, family = "glmpoisson")
+m19 <- fit_ct(y ~ vs * am + (1 | gear), data= data3, family = "glmpoisson")
 
-m20 <- fit_ct(y ~ vs * am + (1 | gear), data = data, family = "glmnb")
+m20 <- fit_ct(y ~ vs * am + (1 | gear), data= data3, family = "glmnb")
 
-m19_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data = data, family = "glmpoisson")
+m19_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data= data3, family = "glmpoisson")
 
-m20_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data = data, family = "glmnb")
+m20_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data= data3, family = "glmnb")
 
 # cat cont
 
-m21 <- fit_ct(y ~ hp * vs + (1 | gear), data = data, family = "glmpoisson")
+m21 <- fit_ct(y ~ hp * vs + (1 | gear), data= data3, family = "glmpoisson")
 
-m22 <- fit_ct(y ~ hp * vs + (1 | gear), data = data, family = "glmnb")
+m22 <- fit_ct(y ~ hp * vs + (1 | gear), data= data3, family = "glmnb")
 
-m21_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data = data, family = "glmpoisson")
+m21_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data= data3, family = "glmpoisson")
 
-m22_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data = data, family = "glmnb")
-
-
-# working examples 
+m22_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data= data3, family = "glmnb")
 
 
-model <- fit_ct(y ~ mpg * vs + (1 | gear),
-                data = data,
-                family = "glmpoisson")
 
 
-data2 <- read.csv("/Users/apple/Documents/GitHub/crtools/Private_Dataset/McMillanAcheMonkeyTrips.csv")
 
-model2 <- fit_ct(Age ~ Kills*TripDays+(1|PID),
-                data = data2,
-                family = "glmpoisson")
+
 
 t<-interp_ct(model2)
 
@@ -293,7 +300,7 @@ cat(build_emmeans_text(
 
 m10_off <- fit_ct(
   y ~ hp * mpg + offset(log(exposure)),
-  data = data,
+  data= data3,
   family = "poisson"
 )
 
@@ -440,11 +447,9 @@ library(devtools)
 ```
 ```{r}
 
-
-
 m <- fit_ct(
   y ~ hp * mpg + offset(log(exposure)),
-  data = data,
+  data= data3,
   family = "poisson"
 )
 
@@ -469,3 +474,492 @@ t <- interp_ct(m3)
 
 ```
 
+
+
+
+
+
+
+
+
+#--------------------------------------------#--------------------------------------------#--------------------------------------------
+
+
+#------#--------------------------------------------Arche Monky Trip Kill Examples------#--------------------------------------------#
+
+
+#--------------------------------------------#--------------------------------------------#--------------------------------------------
+
+
+
+
+ # Loading File and showcasing ggmeansplot.R
+```{r}
+
+
+# set.seed(113)
+set.seed(123)
+
+# we can also use the count data2set
+# data2 <- read.csv("../data2set/McMillanAcheMonkeyTrips.csv")
+
+# I used mtcars since and made artifical data2 instead
+data2 <- read.csv("/Users/apple/Documents/GitHub/crtools/Private_dataset/McMillanAcheMonkeyTrips.csv")
+
+# make a proper count outcome
+data2$x2 <- rnorm(n=nrow(data2),mean=10,sd=2)
+data2$vs <- as.factor(rbinom(n = nrow(data2), size = 1, prob = 0.5))
+data2$am <- as.factor(rbinom(n = nrow(data2), size = 1, prob = 0.5))
+# add zero inflation
+zero_idx <- sample(1:nrow(data2), size = 10)
+data2$Age[zero_idx] <- 0
+
+
+#===========================
+# cont x categorical poisson
+#===========================
+
+
+
+m1 <- fit_ct(Age ~ Kills * vs, data = data2, family = "poisson")
+ggemmeansplot(m1, pred = "Kills", moderator = "vs")
+ggemmeansplot(m1, pred = "vs", moderator = "Kills")
+
+m2 <-  fit_ct(Age ~ Kills * vs, data = data2, family = "negbin")
+ggemmeansplot(m2, pred = "Kills", moderator = "vs")
+
+m3 <-  fit_ct(Age ~ Kills * vs, data = data2, family = "qpoisson")
+ggemmeansplot(m3, pred = "Kills", moderator = "vs")
+
+
+
+
+
+m4 <-  fit_ct(Age ~ Kills * vs, data = data2, family = "zip")
+ggemmeansplot(m4, pred = "Kills", moderator = "vs")
+
+
+m5 <-  fit_ct(Age ~ Kills * vs, data = data2, family = "zinb")
+ggemmeansplot(m5, pred = "Kills", moderator = "vs")
+
+ggemmeansplot(m5, pred = "vs", moderator = "Kills")
+
+
+
+# with offset one from each should be enough
+m1_off <- fit_ct(
+  Age ~ Kills * vs + offset(log(TripDays)),
+  data = data2,
+  family = "poisson"
+)
+ggemmeansplot(m1_off, pred = "Kills", moderator = "vs")
+
+
+m5_off <- fit_ct(
+  Age ~ Kills * vs + offset(log(TripDays)),
+  data = data2,
+  family = "zinb"
+)
+ggemmeansplot(m5_off, pred = "Kills", moderator = "vs")
+
+
+
+# categorical x categorical
+
+m6 <- fit_ct(Age ~ vs * am, data = data2, family = "poisson")
+ggemmeansplot(m6, pred = "vs", moderator = "am")
+
+m7 <- fit_ct(Age ~ vs * am, data = data2, family = "negbin")
+ggemmeansplot(m7, pred = "vs", moderator = "am")
+
+m8 <- fit_ct(Age ~ vs * am, data = data2, family = "qpoisson")
+ggemmeansplot(m8, pred = "vs", moderator = "am")
+
+
+m9 <-  fit_ct(Age ~ vs * am, data = data2, family = "zip")
+ggemmeansplot(m9, pred = "vs", moderator = "am")
+
+# I forgot the zinb case
+m15 <- fit_ct(Age ~ vs * am, data = data2, family = "zinb")
+ggemmeansplot(m15, pred = "vs", moderator = "am")
+
+
+
+m6_off <- fit_ct(Age ~ vs * am + offset(log(TripDays)), data = data2, family = "poisson")
+ggemmeansplot(m6_off, pred = "vs", moderator = "am")
+
+
+
+# cont vs cont
+
+m10 <- fit_ct(Age ~ Kills * x2, data = data2, family = "poisson")
+ggemmeansplot(m10, pred = "Kills", moderator = "x2")
+
+m11 <- fit_ct(Age ~ Kills * x2, data = data2, family = "negbin")
+ggemmeansplot(m11, pred = "Kills", moderator = "x2")
+
+m12 <- fit_ct(Age ~ Kills * x2, data = data2, family = "qpoisson")
+ggemmeansplot(m12, pred = "Kills", moderator = "x2")
+
+m13 <- fit_ct(Age ~ Kills * x2, data = data2, family = "zip")
+ggemmeansplot(m13, pred = "Kills", moderator = "x2")
+
+m14 <- fit_ct(Age ~ Kills * x2, data = data2, family = "zinb")
+ggemmeansplot(m14, pred = "Kills", moderator = "x2")
+
+
+
+m10_off <- fit_ct(
+  Age ~ Kills * x2 + offset(log(TripDays)),
+  data = data2,
+  family = "poisson"
+)
+ggemmeansplot(m10_off, pred = "Kills", moderator = "x2")
+
+m14_off <- fit_ct(
+  Age ~ Kills * x2 + offset(log(TripDays)),
+  data = data2,
+  family = "zinb"
+)
+ggemmeansplot(m14_off, pred = "Kills", moderator = "x2")
+
+
+
+# glmer mixed effect model after 16
+
+
+# cont cont
+m17 <- fit_ct(Age ~ Kills * x2, data = data2, family = "glmpoisson")
+ggemmeansplot(m17, pred = "Kills", moderator = "x2")
+
+m18 <- fit_ct(Age ~ Kills * x2, data = data2, family = "glmnb")
+ggemmeansplot(m18, pred = "Kills", moderator = "x2")
+
+m17_off <- fit_ct(Age ~ Kills * x2 + offset(log(TripDays)), data = data2, family = "glmpoisson")
+ggemmeansplot(m17_off, pred = "Kills", moderator = "x2")
+
+m18_off <- fit_ct(Age ~ Kills * x2 + offset(log(TripDays)), data = data2, family = "glmnb")
+ggemmeansplot(m18_off, pred = "Kills", moderator = "x2")
+
+
+# cat cat
+m19 <- fit_ct(Age ~ vs * am, data = data2, family = "glmpoisson")
+ggemmeansplot(m19, pred = "vs", moderator = "am")
+
+m20 <- fit_ct(Age ~ vs * am, data = data2, family = "glmnb")
+ggemmeansplot(m20, pred = "vs", moderator = "am")
+
+m19_off <- fit_ct(Age ~ vs * am + offset(log(TripDays)), data = data2, family = "glmpoisson")
+ggemmeansplot(m19_off, pred = "vs", moderator = "am")
+
+m20_off <- fit_ct(Age ~ vs * am + offset(log(TripDays)), data = data2, family = "glmnb")
+ggemmeansplot(m20_off, pred = "vs", moderator = "am")
+
+# cat cont
+
+m21 <- fit_ct(Age ~ Kills * vs, data = data2, family = "glmpoisson")
+ggemmeansplot(m21, pred = "Kills", moderator = "vs")
+
+m22 <- fit_ct(Age ~ Kills * vs, data = data2, family = "glmnb")
+ggemmeansplot(m22, pred = "Kills", moderator = "vs")
+
+m21_off <- fit_ct(Age ~ Kills * vs + offset(log(TripDays)), data = data2, family = "glmpoisson")
+ggemmeansplot(m21_off, pred = "Kills", moderator = "vs")
+
+m22_off <- fit_ct(Age ~ Kills * vs + offset(log(TripDays)), data = data2, family = "glmnb")
+ggemmeansplot(m22_off, pred = "Kills", moderator = "vs")
+
+
+
+
+# refit with random effect specified
+# cont cont
+m17 <- fit_ct(Age ~ Kills * x2 + (1 | vs), data = data2, family = "glmpoisson")
+
+
+
+m18 <- fit_ct(Age ~ Kills * x2 + (1 | PID), data = data2, family = "glmnb")
+
+m17_off <- fit_ct(Age ~ Kills * x2 + (1 | PID) + offset(log(TripDays)), data = data2, family = "glmpoisson")
+
+m18_off <- fit_ct(Age ~ Kills * x2 + (1 | PID) + offset(log(TripDays)), data = data2, family = "glmnb")
+
+
+# cat cat
+m19 <- fit_ct(Age ~ vs * am + (1 | PID), data = data2, family = "glmpoisson")
+
+m20 <- fit_ct(Age ~ vs * am + (1 | PID), data = data2, family = "glmnb")
+
+m19_off <- fit_ct(Age ~ vs * am + (1 | PID) + offset(log(TripDays)), data = data2, family = "glmpoisson")
+
+m20_off <- fit_ct(Age ~ vs * am + (1 | PID) + offset(log(TripDays)), data = data2, family = "glmnb")
+
+# cat cont
+
+m21 <- fit_ct(Age ~ Kills * vs + (1 | PID), data = data2, family = "glmpoisson")
+
+m22 <- fit_ct(Age ~ Kills * vs + (1 | PID), data = data2, family = "glmnb")
+
+m21_off <- fit_ct(Age ~ Kills * vs + (1 | PID) + offset(log(TripDays)), data = data2, family = "glmpoisson")
+
+m22_off <- fit_ct(Age ~ Kills * vs + (1 | PID) + offset(log(TripDays)), data = data2, family = "glmnb")
+
+
+
+
+```
+
+ggmeans(model=m9,terms=(c("vs","am")), interval = "confidence")
+
+# Testing Emmean Text function
+
+```{r}
+
+
+
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- as.factor(mtcars$am)
+
+
+em1 <- emmeans(m6, ~ vs | am,type="response")
+mod.emmeans1 <- as.data2.frame(em1)
+
+em2 <- emmeans(m14_off, ~ Kills | x2)
+mod.emmeans2 <- as.data2.frame(em2)
+
+cat(build_emmeans_text(
+  model = m6,
+  mod.emmeans = em1,
+  pred = "vs",
+  moderator = "am"
+))
+
+m10_off <- fit_ct(
+  Age ~ Kills * x2 + offset(log(TripDays)),
+  data = data2,
+  family = "poisson"
+)
+
+em2 <- emmeans(m10_off, ~ Kills | x2)
+mod.emmeans2 <- as.data2.frame(em2)
+
+cat(build_emmeans_text(
+  model = m10_off,
+  mod.emmeans = em2,
+  pred = "Kills",
+  moderator = "x2"
+))
+
+
+```
+
+
+
+# Testing interp_ct
+
+```{r}
+
+#===========================
+# cont x categorical poisson
+#===========================
+
+
+t_m1 <- interp_ct(m1)
+
+t_m2 <- interp_ct(m2)
+
+t_m3 <- interp_ct(m3) # error
+
+t_m4 <- interp_ct(m4)
+
+t_m5 <- interp_ct(m5)
+
+t_m1_off <- interp_ct(m1_off)
+
+t_m5_off <- interp_ct(m5_off)
+
+
+#===========================
+# cat x categorical poisson
+#===========================
+
+t_m6 <- interp_ct(m6)
+
+t_m7 <- interp_ct(m7)
+
+t_m8 <- interp_ct(m8)
+
+t_m9 <- interp_ct(m9)
+
+t_m15 <- interp_ct(m15)
+
+t_m6_off <- interp_ct(m6_off)
+
+
+#===========================
+# cont x cont poisson
+#===========================
+
+t_m10 <- interp_ct(m10)
+
+t_m11 <- interp_ct(m11)
+
+t_m12 <- interp_ct(m12)
+
+t_m13 <- interp_ct(m13)
+
+t_m14 <- interp_ct(m14)
+
+t_m10_off <- interp_ct(m10_off)
+
+t_m14_off <- interp_ct(m14_off)
+
+
+
+
+
+#===========================
+# GLMER MIXED EFFECT
+#===========================
+
+
+#===========================
+# cont x cont poisson
+#===========================
+
+t_m17 <- interp_ct(m17)
+t_m18 <- interp_ct(m18)
+
+t_m17_off <- interp_ct(m17_off)
+t_m18_off <- interp_ct(m18_off)
+
+
+#===========================
+# cat x categorical poisson
+#===========================
+
+t_m19 <- interp_ct(m19)
+t_m20 <- interp_ct(m20)
+
+t_m19_off <- interp_ct(m19_off)
+t_m20_off <- interp_ct(m20_off)
+
+#===========================
+# cont x categorical poisson
+#===========================
+
+
+t_m21 <- interp_ct(m21)
+t_m22 <- interp_ct(m22)
+
+t_m21_off <- interp_ct(m21_off)
+t_m22_off <- interp_ct(m22_off)
+
+
+
+
+
+
+
+
+```
+
+# check model assumption
+```{r}
+
+
+
+#===========================
+# cont x categorical poisson
+#===========================
+
+chk_ct(m1)
+
+chk_ct(m2)
+
+chk_ct(m3)  # error
+
+chk_ct(m4)
+
+chk_ct(m5)
+
+chk_ct(m1_off)
+
+chk_ct(m5_off)
+
+
+#===========================
+# cat x categorical poisson
+#===========================
+
+chk_ct(m6)
+
+chk_ct(m7)
+
+chk_ct(m8)
+
+chk_ct(m9)
+
+chk_ct(m15)
+
+chk_ct(m6_off)
+
+
+#===========================
+# cont x cont poisson
+#===========================
+
+chk_ct(m10)
+
+chk_ct(m11)
+
+chk_ct(m12)
+chk_ct(m13)
+
+chk_ct(m14)
+
+chk_ct(m10_off)
+
+chk_ct(m14_off)
+
+
+#===========================
+# GLMER MIXED EFFECT
+#===========================
+
+chk_ct(m17)
+chk_ct(m18)
+
+chk_ct(m17_off)
+chk_ct(m18_off)
+
+
+#===========================
+# cat x categorical poisson
+#===========================
+
+chk_ct(m19)
+chk_ct(m20)
+
+chk_ct(m19_off)
+chk_ct(m20_off)
+
+
+#===========================
+# cont x categorical poisson
+#===========================
+
+chk_ct(m21)
+chk_ct(m22)
+
+chk_ct(m21_off)
+
+
+
+
+
+
+
+t<- select_ct(formula(m10_off), data = data2)
+t<- select_ct(formula(m22), data = data2)
+```

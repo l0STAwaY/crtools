@@ -36,7 +36,7 @@ bootstrap_ct_model <- function(model, B = 100) {
   # b is the number of simulation for bootstra
   # This has to be a fit_ct fitted model
   # It will break if we call a standard glm and pass it in
-  data <- model.frame(model)
+  data <- if (!is.null(model$org_data)) model$org_data else model.frame(model)
   # this 
   names(data) <- sub("^offset\\((.*)\\)$", "\\1", names(data))
   formula <- formula(model)

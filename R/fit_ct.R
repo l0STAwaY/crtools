@@ -60,11 +60,13 @@ fit_ct <- function(formula, data, family = "poisson") {
   }
   
   model$ct_family = family
-  
+  model$org_data <- data 
 
   
   return(model)
 }
+
+
 # 
 # 
 # model <- fit_ct(y ~ mpg + cyl + hp + (1 | gear),

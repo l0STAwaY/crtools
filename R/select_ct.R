@@ -60,18 +60,34 @@ select_ct <- function(formula, data, B = 100) {
     )
   }
   
+
+  # detect random effect terms
+  is_mixed <- grepl("\\([^()]*\\|[^()]*\\)", deparse(formula))
   
-  # this is a list of fitted model
-  models <- list(
-    poisson  = safe_fit(fit_ct(formula, data, family = "poisson"), "poisson"),
-    qpoisson = safe_fit(fit_ct(formula, data, family = "qpoisson"), "qpoisson"),
-    negbin   = safe_fit(fit_ct(formula, data, family = "negbin"), "negbin"),
-    zip      = safe_fit(fit_ct(formula, data, family = "zip"), "zip"),
-    zinb     = safe_fit(fit_ct(formula, data, family = "zinb"), "zinb"),
-    # ---------------- glmm versions (new) ----------------
-    glmpoisson = safe_fit(fit_ct(formula, data, family = "glmpoisson"), "glmpoisson"),
-    glmnb = safe_fit(fit_ct(formula, data, family = "glmnb"), "glmnb")
+
+  if (is_mixed) {
+    
+    message("Mixed-effects structure detected -> fitting GLMM count models only")
+    
+    models <- list(
+      glmpoisson = safe_fit(fit_ct(formula, data, family = "glmpoisson"), "glmpoisson"),
+      glmnb      = safe_fit(fit_ct(formula, data, family = "glmnb"), "glmnb")
     )
+    
+  } else {
+    
+    message("No mixed-effects structure -> fitting full count model set")
+    
+    models <- list(
+      poisson    = safe_fit(fit_ct(formula, data, family = "poisson"), "poisson"),
+      qpoisson   = safe_fit(fit_ct(formula, data, family = "qpoisson"), "qpoisson"),
+      negbin     = safe_fit(fit_ct(formula, data, family = "negbin"), "negbin"),
+      zip        = safe_fit(fit_ct(formula, data, family = "zip"), "zip"),
+      zinb       = safe_fit(fit_ct(formula, data, family = "zinb"), "zinb"),
+      glmpoisson = safe_fit(fit_ct(formula, data, family = "glmpoisson"), "glmpoisson"),
+      glmnb      = safe_fit(fit_ct(formula, data, family = "glmnb"), "glmnb")
+    )
+  }
 
   
 
@@ -216,7 +232,7 @@ select_ct <- function(formula, data, B = 100) {
   cat("\nPerformance summary (top rows):\n")
   print(utils::head(perf_df, 10))
   
-  cat("\nBest model by BIC:\n")
+  cat("\nBest model recommended by BIC:\n")
   print(best_model)
   
   cat("\nBootstrap CI summary:\n")

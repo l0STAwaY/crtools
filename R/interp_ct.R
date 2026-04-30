@@ -57,7 +57,7 @@
 interp_ct <- function(model,alpha=0.05,display=TRUE){
   # model family
   fam <- get_ct_family(model)
-  data <-model.frame(model)
+  data <- if (!is.null(model$org_data)) model$org_data else model.frame(model)
   mod.sum <- summary(model)
   response <- all.vars(formula(model))[1]
   
@@ -179,9 +179,6 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
     coefs <- coefs[names(coefs) != "(Intercept)"]
   }
 
-
-  
-  
   # ---------------- main interpretation ----------------
   # implemented log - unit
   # log - log
@@ -196,7 +193,6 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
       beta <- coefs[name]
       # log-transformed predictor
       # if this variable is log that is we are able to grep a log out of it
-
       if (length(grep("log\\(", name)) > 0) {
         
         # log interperation is percentage percentage increase intrepreation
@@ -275,6 +271,7 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
       # variable for two way interaction
       vars <- strsplit(i, ":")[[1]]
 
+
     
       # this jus labels in order of the vector what are continous and what is a factor
       types <- sapply(vars, function(v) {
@@ -302,7 +299,8 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
         em <- emmeans::emmeans(
           model,
           specs = as.formula(paste("~", vars[1], "|", vars[2])),
-          type = "response"
+          type = "response",
+          data = data
         )
         
         em_tab <- as.data.frame(em)
@@ -424,7 +422,8 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
         em <- emmeans::emmeans(
           model,
           specs = as.formula(paste("~", cont_var, "|", fac_var)),
-          type = "response"
+          type = "response",
+          data = data
         )
         
         em_tab <- as.data.frame(em)
@@ -535,7 +534,8 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
         em <- emmeans::emmeans(
           model,
           specs = as.formula(paste("~", vars[1], "|", vars[2])),
-          type = "response"
+          type = "response",
+          data = data
         )
         
         em_tab <- as.data.frame(em)
@@ -661,7 +661,6 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
         
 
   }
-  
   return(list(
     
     # ---------------- main interpretation ----------------

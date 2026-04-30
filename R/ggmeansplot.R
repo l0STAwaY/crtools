@@ -1,5 +1,4 @@
 library(ggeffects)
-library(emmeans)
 library(dplyr)
 library(ggplot2)
 #' Plot model-based predictions for interactions
@@ -40,25 +39,65 @@ library(ggplot2)
 #' @export
 ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction"){
   
+  
   # Believe that ggeffects auomatically on the response scales so major changes
-  data <-model.frame(model)
+  data <- if (!is.null(model$org_data)) model$org_data else model.frame(model)
   pred_type <- if (is.numeric(data[[pred]])) "cont" else "factor"
   mod_type  <- if (is.numeric(data[[moderator]])) "cont" else "factor"
+  
+  
+
 
   
-  if (pred_type == "cont" && mod_type == "cont"){
-    
+    if (pred_type == "cont") {
+      pred_range <- seq(
+        min(data[[pred]], na.rm = TRUE),
+        max(data[[pred]], na.rm = TRUE),
+        length.out = 25
+      )
+    }
+      
     "####################################"
     "# Effects of Interest"
     "####################################"
     
+if (pred_type == "cont" && mod_type == "cont") {
+      
     m.mod <- mean(data[[moderator]], na.rm = TRUE)
     s.mod <- sd(data[[moderator]], na.rm = TRUE)
-    meffectsfor <- c(pred, paste(moderator, "[",round(m.mod-s.mod,2), ",", round(m.mod+s.mod,2),"]", sep=""))
-    mod.emmeans<-ggemmeans(model = model, terms = meffectsfor , interval = "confidence") # checkbox
-    ggdat <- data.frame(mod.emmeans) %>%
+    
+    # make one categoricla
+    meffectsfor <- c(round(m.mod - s.mod, 2),round(m.mod + s.mod, 2))
+    # mod.emmeans<-ggemmeans(model = model, terms = meffectsfor , interval = "confidence",data=data) # checkbox
+    
+    mod.emmeans <- emmeans(
+      object = model,
+      specs = as.formula(paste0("~ ", pred, " * ", moderator)),
+      at = setNames(list(pred_range, meffectsfor), c(pred, moderator)),
+      type = "response",
+      interval = "confidence",
+      data = data
+    )
+    
+    ggdat <- as.data.frame(mod.emmeans) %>%
+      rename(
+        conf.low = asymp.LCL, 
+        conf.high = asymp.UCL
+      ) %>%
+      mutate(group = .data[[moderator]],x= .data[[pred]]) %>%
       mutate(group = case_when(group == round(m.mod - s.mod, 2) ~ paste("Low (Mean - 1SD = ", round(m.mod - s.mod, 2), ")", sep = ""),
                                TRUE                             ~ paste("High (Mean + 1SD = ", round(m.mod + s.mod, 2), ")", sep = "")))
+     
+    
+    
+    if ("response" %in% names(ggdat)) {
+      ggdat <- ggdat %>% rename(predicted = response)
+    } else if ("rate" %in% names(ggdat)) {
+      ggdat <- ggdat %>% rename(predicted = rate)
+    } else if ("emmean" %in% names(ggdat)) {
+      ggdat <- ggdat %>% rename(predicted = emmean)
+    }
+    
     
     if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
       warning("No confidence intervals returned by ggemmeans. Check model type.")
@@ -87,12 +126,36 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
     return(p)
     
   }
-  
   else if(pred_type == "factor" && mod_type == "factor"){
     
-    mod.emmeans<-ggemmeans(model = model, terms = c(pred, moderator) , interval = "confidence") # checkbox
-    ggdat <- data.frame(mod.emmeans)
+    # every point for both
+    mod.emmeans <- emmeans(
+    object = model,
+    specs = as.formula(paste0("~ ", pred, " * ", moderator)),
+    type = "response",
+    interval = "confidence",
+    data = data
+    )
+    ggdat <- as.data.frame(mod.emmeans) %>%
+    rename(
+       conf.low = asymp.LCL,
+       conf.high = asymp.UCL
+    ) %>%
+      mutate(group = .data[[moderator]],x= .data[[pred]])
     
+    
+    if ("response" %in% names(ggdat)) {
+      ggdat <- ggdat %>% rename(predicted = response)
+    } else if ("rate" %in% names(ggdat)) {
+      ggdat <- ggdat %>% rename(predicted = rate)
+    } else if ("emmean" %in% names(ggdat)) {
+      ggdat <- ggdat %>% rename(predicted = emmean)
+    }
+    
+
+  
+
+  
 
     if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
       warning("No confidence intervals returned by ggemmeans. Check model type.")
@@ -100,7 +163,11 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
     }
     
     if (any(is.na(ggdat$predicted))) {
-      warning("Some predicted values are NA. These rows will be removed from the plot so proceed interpretation with caution. This usually happens when the model cannot estimate predictions for certain combinations of variables.")
+      warning(
+        "Some predicted values are NA and were removed from the plot. This usually occurs when the model cannot estimate predictions 
+        for certain combinations of the predictor and moderator 
+        (e.g., values outside the observed range or unsupported factor combinations). Please check your data or evaluation points."
+      )      
       ggdat <- ggdat %>% filter(!is.na(predicted))
     }
     
@@ -117,18 +184,48 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
     
     
     
-  }else{#One of Each
+  }else{  #One of Each
     if(mod_type=="factor"){
       
-      mod.emmeans<-ggemmeans(model = model, terms = c(pred,moderator) , interval = "confidence") # checkbox
+      # at all factor level and for all defined contious
+      mod.emmeans <- emmeans(
+        object = model,
+        specs = as.formula(paste0("~ ", pred, " * ", moderator)),
+        at = setNames(list(pred_range), pred),
+        type = "response",
+        interval = "confidence",
+        data = data
+      )
+
+      
+      # mod.emmeans<- ggemmeans(model = model, terms = c(pred,moderator) , interval = "confidence",data=data) # checkbox
       
       "####################################"
       "# Plot"
       "####################################"
-      ggdat <- data.frame(mod.emmeans)
+      ggdat <- as.data.frame(mod.emmeans) %>%
+        rename(
+          conf.low = asymp.LCL, 
+          conf.high = asymp.UCL
+        ) %>%
+        mutate(group = .data[[moderator]], x= .data[[pred]])
       
+      
+        if ("response" %in% names(ggdat)) {
+          ggdat <- ggdat %>% rename(predicted = response)
+        } else if ("rate" %in% names(ggdat)) {
+          ggdat <- ggdat %>% rename(predicted = rate)
+        } else if ("emmean" %in% names(ggdat)) {
+          ggdat <- ggdat %>% rename(predicted = emmean)
+        }
+      
+        
       if (any(is.na(ggdat$predicted))) {
-        warning("Some predicted values are NA. These rows will be removed from the plot so proceed interpretation with caution. This usually happens when the model cannot estimate predictions for certain combinations of variables.")
+        warning(
+          "Some predicted values are NA and were removed from the plot. This usually occurs when the model cannot estimate predictions 
+        for certain combinations of the predictor and moderator 
+        (e.g., values outside the observed range or unsupported factor combinations). Please check your data or evaluation points."
+        )         
         ggdat <- ggdat %>% filter(!is.na(predicted))
       }
       
@@ -152,23 +249,45 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
       return(p)
       
       
-    }else{
+    }else{ # if moderator is the contnious
       m.mod <- mean(data[[moderator]], na.rm = TRUE)
       s.mod <- sd(data[[moderator]], na.rm = TRUE)
-      meffectsfor <- c(pred, paste(moderator, "[",round(m.mod-s.mod,2), ",", round(m.mod+s.mod,2),"]", sep=""))
-      mod.emmeans<-ggemmeans(model = model, terms = meffectsfor , interval = "confidence") # checkbox
+      meffectsfor <- c(round(m.mod - s.mod, 2),round(m.mod + s.mod, 2))
+
+      # mod.emmeans<-ggemmeans(model = model, terms = meffectsfor , interval = "confidence",data=data) # checkbox
+      
+      mod.emmeans <- emmeans(
+        object = model,
+        specs = as.formula(paste0("~ ", pred, " * ", moderator)),
+        at = setNames(list(meffectsfor), moderator),
+        type = "response", 
+        data = data
+      )
+ 
       
       
-      mod.emmeans <- mod.emmeans %>% 
-        mutate(group=ifelse(group == round(m.mod-s.mod,2), paste("Low (Mean - 1SD = ", round(m.mod-s.mod,2), ")", sep=""),
-                            paste("High (Mean + 1SD = ", round(m.mod+s.mod,2), ")", sep="")))
-      
+
 
       
       "####################################"
       "# Plot"
       "####################################"
-      ggdat <- data.frame(mod.emmeans)
+      ggdat <- as.data.frame(mod.emmeans) %>%
+        rename(
+          conf.low = asymp.LCL, 
+          conf.high = asymp.UCL
+        ) %>%
+        mutate(group = .data[[moderator]],x= .data[[pred]] )%>% 
+        mutate(group=ifelse(group == round(m.mod-s.mod,2), paste("Low (Mean - 1SD = ", round(m.mod-s.mod,2), ")", sep=""),
+                            paste("High (Mean + 1SD = ", round(m.mod+s.mod,2), ")", sep="")))
+      
+        if ("response" %in% names(ggdat)) {
+          ggdat <- ggdat %>% rename(predicted = response)
+        } else if ("rate" %in% names(ggdat)) {
+          ggdat <- ggdat %>% rename(predicted = rate)
+        } else if ("emmean" %in% names(ggdat)) {
+          ggdat <- ggdat %>% rename(predicted = emmean)
+        }
       
 
       if (!all(c("conf.low", "conf.high") %in% names(ggdat))) {
@@ -177,7 +296,11 @@ ggemmeansplot <- function(model,pred,moderator,se.on=TRUE, y.label = "Prediction
       }
       
       if (any(is.na(ggdat$predicted))) {
-        warning("Some predicted values are NA. These rows will be removed from the plot so proceed interpretation with caution. This usually happens when the model cannot estimate predictions for certain combinations of variables.")
+        warning(
+          "Some predicted values are NA and were removed from the plot. This usually occurs when the model cannot estimate predictions 
+        for certain combinations of the predictor and moderator 
+        (e.g., values outside the observed range or unsupported factor combinations). Please check your data or evaluation points."
+        )          
         ggdat <- ggdat %>% filter(!is.na(predicted))
       }
       
