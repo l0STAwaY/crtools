@@ -24,35 +24,35 @@ It also calculates bootstrap coefficients as well as normal model confidence int
 Provides a unified interpretation framework for count regression models fitted using `fit_ct`. The function generates model interpretation text,
 interaction summaries, marginal effects tables, and marginal effects diagnostic plots.
 
-#' This function summarizes:
-#' \itemize{
-#'   \item Main model interpretation (log-link coefficient interpretation)
-#'   \item Emmeans-based marginal means for interactions
-#'   \item Emtrends-based marginal slopes for interactions
-#'   \item Pairwise contrasts for both emmeans and emtrends
-#'   \item Diagnostic interaction plots including:
-#'     \itemize{
-#'       \item Emmeans plots
-#'       \item Emtrends plots
-#'       \item Johnson–Neyman plots (when available)
-#'     }
-#' }
-#' 
+This function summarizes:
+ \itemize{
+ \item Main model interpretation (log-link coefficient interpretation)
+ \item Emmeans-based marginal means for interactions
+ \item Emtrends-based marginal slopes for interactions
+ \item Pairwise contrasts for both emmeans and emtrends
+ \item Diagnostic interaction plots including:
+   \itemize{
+     \item Emmeans plots
+      \item Emtrends plots      
+      \item Johnson–Neyman plots (when available)
+    }
+ }
+ 
 
 It supports 
 
-#' Factor × Factor:
-#' Only emmeans are shown. ggemmeansplot displays discrete group comparisons.
-#'
-#' Continuous × Factor:
-#' Both emmeans and emtrends are computed.
-#' ggemmeansplot shows how the response changes across the continuous variable by group.
-#'
-#' Continuous × Continuous:
-#' Both emmeans and emtrends are computed.
-#' One continuous variable is evaluated at mean plus or minus 1 SD (or similar representative values),
-#' while the other is plotted continuously by group.
-#' When available, a Johnson–Neyman plot is used.
+- Factor × Factor:
+Only emmeans are shown. ggemmeansplot displays discrete group comparisons.
+
+- Continuous × Factor:
+Both emmeans and emtrends are computed.
+ ggemmeansplot shows how the response changes across the continuous variable by group.
+
+- Continuous × Continuous:
+ Both emmeans and emtrends are computed.
+ One continuous variable is evaluated at mean plus or minus 1 SD (or similar representative values),
+ while the other is plotted continuously by group.
+  When available, a Johnson–Neyman plot is used.
 
 
 ## chk_ct()
