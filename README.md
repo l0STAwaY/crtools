@@ -39,12 +39,28 @@ interaction summaries, marginal effects tables, and marginal effects diagnostic 
 #' }
 #' 
 
+It supports 
+
+#' Factor × Factor:
+#' Only emmeans are shown. ggemmeansplot displays discrete group comparisons.
+#'
+#' Continuous × Factor:
+#' Both emmeans and emtrends are computed.
+#' ggemmeansplot shows how the response changes across the continuous variable by group.
+#'
+#' Continuous × Continuous:
+#' Both emmeans and emtrends are computed.
+#' One continuous variable is evaluated at mean plus or minus 1 SD (or similar representative values),
+#' while the other is plotted continuously by group.
+#' When available, a Johnson–Neyman plot is used.
+
 
 ## chk_ct()
 
 
-Performs a comprehensive diagnostic check for count regression models, including Poisson, quasi-Poisson, negative binomial, and zero-inflated models and mixed effect models.
-The model prints and does not return anything
+Performs a comprehensive diagnostic check for count regression models, including Poisson, quasi-Poisson, negative binomial, and zero-inflated models and mixed effect models. The model prints and does not return anything.
+
+Note that  Zero-inflation tests are performed using simulation-based methods (DHARMa). However, these tests may fail for some model classes (e.g., \code{zeroinfl} from the \code{pscl} package) due to missing \code{simulate()} methods or incompatible model structures. In such cases, the test is automatically skipped.
 
 ## summary_overall()
 
