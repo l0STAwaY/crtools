@@ -1,11 +1,10 @@
-## Here is a general description of the import functions in our code
+## Here is a general description of the functions we have
 
-
+currently download the files and  use devtools::load_all() to load crtools into the environment
 
 # Test Document Overview
 
-The Test Document file contains a large example dataset that illustrates how the system is tested. Specificallym the test-interp_chk_select have alot more 
-test case avalible if necessary to illustrate the functionality.
+The Test Document file contains a large example dataset that illustrates how the system is tested. Specificallym the test-interp_chk_select have alot more test case avalible if necessary to illustrate the functionality. However, most possible specificaltion of the models should be in the Test Document.
 
 
 ## select_ct()
@@ -91,13 +90,17 @@ Computes and visualizes the Johnson-Neyman significance regionfor interactions i
 The function is not implemented for ZeroInflation or effect models because both don't work the interaction package
 
 
+## bootstrap_ct_model()
+
+This creates bootstrap  confidnece interval for the model
+
 ## ggemmeansplot()
 
 Uses emmeans to plot predicted values from count models.
 Automatically handles continuous and categorical predictors and moderators.
 Displays confidence intervals when available.
 
-## All the other emmeans and emmtrends tab, contrast, tab 
+## All the other emmeans and emmtrends tab, contrast with the pre-script build_....
 
 These are as it's names suggest, helper functions that help us graph out the emmeans emmtrends contrast and table
 
