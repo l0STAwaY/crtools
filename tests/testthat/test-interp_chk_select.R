@@ -173,15 +173,15 @@ test_that("Interp_ct and chk_ct (no failures, warnings allowed)", {
     for (m in all_models) {
       
       # checking this also check the ggemmeans
-      interp_ct(m)
-      chk_ct(m)
+      expect_no_error(interp_ct(m))
+      expect_no_error(chk_ct(m))
 
     }
     # no need check diag count if slect_Ct works diag count works
     # I test the most compcated formula should work for mix ed effect
-    select_ct(formula(m33_log),data2)
+    expect_no_error( select_ct(formula(m33_log),data2))
     # this covers the cases where we are testing formula for non mixed effect model
-    select_ct(formula(m18),data2)
+    expect_no_error(select_ct(formula(m18),data2))
     
   })
   

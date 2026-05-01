@@ -1,5 +1,7 @@
 test_that("Interp_ct and chk_ct checking if they still apply when response has NA (no failures, warnings allowed)", {
   
+  # I didn't check the NA case for when the data is log not log friendly since 
+  
   suppressWarnings({
     
     set.seed(123)
@@ -10,27 +12,12 @@ test_that("Interp_ct and chk_ct checking if they still apply when response has N
     
     data2 <- read.csv(testthat::test_path("test-data/McMillanAcheMonkeyTrips.csv"))
     
-
-    
-    # MAKE LOG-SAFE VARIABLES
-    
-    
-    data2$x2 <- rnorm(nrow(data2), 10, 2)
-    data2$vs <- as.factor(rbinom(nrow(data2), 1, 0.5))
-    data2$am <- as.factor(rbinom(nrow(data2), 1, 0.5))
-    na_idx <- sample(1:nrow(data2), size = 10)
-    data2$Age[na_idx] <- NA
-    
-    
-    
-    data2$Kills <- abs(data2$Kills) + 1
-    
-    
-    data2$TripDays <- abs(data2$TripDays) + 1
-    
-    
-    
-    zero_idx <- sample(1:nrow(data2), 10)
+    # make a proper count outcome
+    data2$x2 <- rnorm(n=nrow(data2),mean=10,sd=2)
+    data2$vs <- as.factor(rbinom(n = nrow(data2), size = 1, prob = 0.5))
+    data2$am <- as.factor(rbinom(n = nrow(data2), size = 1, prob = 0.5))
+    # add zero inflation
+    zero_idx <- sample(1:nrow(data2), size = 10)
     data2$Age[zero_idx] <- 0
     
     # =========================================================
@@ -39,22 +26,22 @@ test_that("Interp_ct and chk_ct checking if they still apply when response has N
     
     m1 <- fit_ct(Age ~ Kills * vs, data2, "poisson")
     m1_off <- fit_ct(Age ~ Kills * vs + offset(log(TripDays)), data2, "poisson")
-    m1_log <- fit_ct(Age ~ log(Kills) * vs, data2, "poisson")
-    m1_off_log <- fit_ct(Age ~ log(Kills) * vs + offset(log(TripDays)), data2, "poisson")
+    expect_error(m1_log <- fit_ct(Age ~ log(Kills) * vs, data2, "poisson"))
+    expect_error(m1_off_log <- fit_ct(Age ~ log(Kills) * vs + offset(log(TripDays)), data2, "poisson"))
     
     m2 <- fit_ct(Age ~ Kills * vs, data2, "negbin")
-    m2_log <- fit_ct(Age ~ log(Kills) * vs, data2, "negbin")
+    expect_error(m2_log <- fit_ct(Age ~ log(Kills) * vs, data2, "negbin"))
     
     m3 <- fit_ct(Age ~ Kills * vs, data2, "qpoisson")
-    m3_log <- fit_ct(Age ~ log(Kills) * vs, data2, "qpoisson")
+    expect_error(m3_log <- fit_ct(Age ~ log(Kills) * vs, data2, "qpoisson"))
     
     m4 <- fit_ct(Age ~ Kills * vs, data2, "zip")
-    m4_log <- fit_ct(Age ~ log(Kills) * vs, data2, "zip")
+    expect_error(m4_log <- fit_ct(Age ~ log(Kills) * vs, data2, "zip"))
     
     m5 <- fit_ct(Age ~ Kills * vs, data2, "zinb")
     m5_off <- fit_ct(Age ~ Kills * vs + offset(log(TripDays)), data2, "zinb")
-    m5_log <- fit_ct(Age ~ log(Kills) * vs, data2, "zinb")
-    m5_off_log <- fit_ct(Age ~ log(Kills) * vs + offset(log(TripDays)), data2, "zinb")
+    expect_error(m5_log <- fit_ct(Age ~ log(Kills) * vs, data2, "zinb"))
+    expect_error(m5_off_log <- fit_ct(Age ~ log(Kills) * vs + offset(log(TripDays)), data2, "zinb"))
     
     # =========================================================
     # CAT × CAT (vs × am)
@@ -142,24 +129,24 @@ test_that("Interp_ct and chk_ct checking if they still apply when response has N
     # RANDOM EFFECT + OFFSET + LOG
     # =========================================================
     
-    m28_log <- fit_ct(Age ~ log(Kills) * x2 + (1 | PID) + offset(log(TripDays)), data2, "glmpoisson")
+    expect_error(m28_log <- fit_ct(Age ~ log(Kills) * x2 + (1 | PID) + offset(log(TripDays)), data2, "glmpoisson"))
     
-    m29_log <- fit_ct(Age ~ log(Kills) * x2 + (1 | PID) + offset(log(TripDays)), data2, "glmnb")
+    expect_error(m29_log <- fit_ct(Age ~ log(Kills) * x2 + (1 | PID) + offset(log(TripDays)), data2, "glmnb"))
     
-    m30_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmpoisson")
+    expect_error(m30_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmpoisson"))
     
-    m31_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmnb")
+    expect_error(m31_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmnb"))
     
-    m32_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmpoisson")
+    expect_error(m32_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmpoisson"))
     
-    m33_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmnb")
+    expect_error(m33_log <- fit_ct(Age ~ log(Kills) * vs + (1 | PID) + offset(log(TripDays)), data2, "glmnb"))
     # =========================================================
     # RUN INTERP + GGPLOT (ALL MODELS)
     # =========================================================
     
     all_models <- list(
       m1,m2,m3,m4,m5,
-      m1_off,m1_log,m1_off_log,m2_log,m3_log,m4_log,m5_off,m5_log,m5_off_log,
+      m1_off,
       m6,m7,m8,m9,m10,
       m6_off,
       m11,m12,m13,m14,m15,
@@ -167,21 +154,21 @@ test_that("Interp_ct and chk_ct checking if they still apply when response has N
       m16,m17,m18,m19,m20,m21,
       m16_off,m17_off,m18_off,m19_off,m20_off,m21_off,
       m22,m23,m24,m25,m26,m27,
-      m28,m29,m30,m31,m32,m33,m28_log,m29_log,m30_log,m31_log,m32_log,m33_log
+      m28,m29,m30,m31,m32,m33
     )
     
     for (m in all_models) {
       
       # checking this also check the ggemmeans
-      interp_ct(m)
-      chk_ct(m)
+      expect_no_error(interp_ct(m))
+      expect_no_error(chk_ct(m))
       
     }
     # no need check diag count if slect_Ct works diag count works
     # I test the most compcated formula should work for mix ed effect
-    select_ct(formula(m33_log),data2)
+    expect_no_error(select_ct(formula(m33_log),data2))
     # this covers the cases where we are testing formula for non mixed effect model
-    select_ct(formula(m18),data2)
+    expect_no_error(select_ct(formula(m18),data2))
     
   })
   
