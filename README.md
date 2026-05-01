@@ -1,0 +1,76 @@
+## Here is a general description of the import functions in our code
+
+
+
+# Test Document Overview
+
+The Test Document file contains a large example dataset that illustrates how the system is tested. Specificallym the test-interp_chk_select have alot more 
+test case avalible if necessary to illustrate the functionality.
+
+
+## select_ct()
+
+Fits and compares multiple count regression models (Poisson, quasi-Poisson, negative binomial, zero-inflated Poisson, and zero-inflated negative binomial), computes diagnostics, bootstrap confidence intervals, and recommends the best model based on BIC.
+
+## diag_ct()
+
+This function returns a diagnostic that includes AIC, BIC, and McFadden’s R-squared for each model, selecting the best model based on BIC.
+
+It also calculates bootstrap coefficients as well as normal model confidence intervals. `select_ct()` calls this function to graph all intervals together and pick the best model via BIC.
+
+
+## interp_ct()
+
+Provides a unified interpretation framework for count regression models fitted using `fit_ct`. The function generates model interpretation text,
+interaction summaries, marginal effects tables, and marginal effects diagnostic plots.
+
+#' This function summarizes:
+#' \itemize{
+#'   \item Main model interpretation (log-link coefficient interpretation)
+#'   \item Emmeans-based marginal means for interactions
+#'   \item Emtrends-based marginal slopes for interactions
+#'   \item Pairwise contrasts for both emmeans and emtrends
+#'   \item Diagnostic interaction plots including:
+#'     \itemize{
+#'       \item Emmeans plots
+#'       \item Emtrends plots
+#'       \item Johnson–Neyman plots (when available)
+#'     }
+#' }
+#' 
+
+
+## chk_ct()
+
+
+Performs a comprehensive diagnostic check for count regression models, including Poisson, quasi-Poisson, negative binomial, and zero-inflated models and mixed effect models.
+The model prints and does not return anything
+
+## summary_overall()
+
+This function computes a comprehensive set of summary statistics for all numeric  variables in a data frame. It is designed for quick exploratory data analysis and
+provides both central tendency and dispersion measures, as well as missing data diagnostics and display a ggpair plot if specified
+
+
+## summary_ct()
+
+Computes basic summary statistics of the count response varaible (5-number summary, variance, variance/ratio, and zero proportion), optionally grouped by a variable.
+ Note that count data are technically not continuous summaries need to be interpreted carefully Specifically: The mean of count data can be a non-integer,
+ even though actual data values are always integers. For variance in count data it's important to compare it to the mean and consider natural dispersion
+#For median and quantiles it is natural to see repeated or integer jumps in values
+
+
+## plot_ct()
+
+Plots the corresponding count varible
+
+
+## fit_ct()
+
+Fits a variety of count regression models using a unified interface, including Poisson, quasi-Poisson, negative binomial, zero-inflated models, and mixed-effects versions of poisson and negative binomial.
+
+
+## jnplot()
+
+Computes and visualizes the Johnson-Neyman significance regionfor interactions involving a continuous predictor and moderator.
+The function is not implemented for ZeroInflation or effect models because both don't work the interaction package
