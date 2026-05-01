@@ -5,7 +5,7 @@ library(dplyr)
 #' 
 #' @description 
 #' Computes basic summary statistics of the count response varaible (5-number summary, variance, variance/ratio,
-#' and zero proportion), optionally grouped by a variable.
+#' and zero proportion ), optionally grouped by a variable.
 #'
 #' Note that count data are technically not continuous summaries need to be interpreted carefully Specifically: The mean of count data can be a non-integer,
 #' even though actual data values are always integers. For variance in count data it's important to compare it to the mean and consider natural dispersion
