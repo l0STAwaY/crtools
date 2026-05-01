@@ -239,17 +239,17 @@ select_ct <- function(formula, data, B = 50) {
   print(names(models)[!sapply(models, is.null)])
   
   cat("\nPerformance summary (top rows):\n")
-  print(utils::head(perf_df, 10))
+  print(head(perf_df, 10))
   
   cat("\nBest model recommended by BIC:\n")
   print(best_model)
   
   cat("\nBootstrap CI summary:\n")
-  print(utils::head(boot_ci, 10))
+  print(head(boot_ci, 10))
   
   
   cat("\nModel-based CI preview (confint):\n")
-  print(utils::head(model_ci, 10))
+  print(head(model_ci, 10))
   
   cat("\n====================================================\n\n")
   

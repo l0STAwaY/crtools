@@ -166,7 +166,7 @@ test_that("Interp_ct and chk_ct checking if they still apply when response has N
     }
     # no need check diag count if slect_Ct works diag count works
     # I test the most compcated formula should work for mix ed effect
-    expect_no_error(select_ct(formula(m33_log),data2))
+    expect_no_error(select_ct(formula(m33),data2))
     # this covers the cases where we are testing formula for non mixed effect model
     expect_no_error(select_ct(formula(m18),data2))
     
