@@ -26,9 +26,9 @@ library(patchwork)
 #' simulation-based diagnostics are required, as it provides full support for
 #' DHARMa.
 #'
-#' @param model A fitted count regression model (e.g., Poisson, NB, ZIP, ZINB)
+#' @param model A fitted count regression model that fit_ct() support
 #'
-#' @return nothing the model only prints the diagnostics for count regression Regression and suggest
+#' @return nothing, the model only prints the diagnostics for count regression Regression and suggest
 #'
 #' @note
 #' VIF testing is simulation-based and may occasionally fail or

@@ -7,8 +7,7 @@
 #' @param model Fitted regression model (glm, lm, etc.)
 #' @param pred Name of focal predictor (character)
 #' @param moderator Name of moderator variable (character)
-#' @param control.fdr Logical; adjust for multiple testing (default TRUE)
-#' @param y.label Label for y-axis
+#' @param control.fdr Logical; adjust for multiple testing (default TRUE)s
 #'
 #' @return ggplot object
 #'
