@@ -47,7 +47,7 @@
 #' @import dplyr ggplot2 tibble
 #'
 #' @export
-select_ct <- function(formula, data, B = 100) {
+select_ct <- function(formula, data, B = 50) {
   
   
   # safe_fit model here gives the error and fit the other models

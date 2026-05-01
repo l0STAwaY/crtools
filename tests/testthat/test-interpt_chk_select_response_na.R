@@ -1,4 +1,4 @@
-test_that("Interp_ct and chk_ct (no failures, warnings allowed)", {
+test_that("Interp_ct and chk_ct checking if they still apply when response has NA (no failures, warnings allowed)", {
   
   suppressWarnings({
     
@@ -6,12 +6,12 @@ test_that("Interp_ct and chk_ct (no failures, warnings allowed)", {
     
     # this is t
     
-
+    
     
     data2 <- read.csv(testthat::test_path("test-data/McMillanAcheMonkeyTrips.csv"))
     
-    
 
+    
     # MAKE LOG-SAFE VARIABLES
     
     
@@ -20,15 +20,15 @@ test_that("Interp_ct and chk_ct (no failures, warnings allowed)", {
     data2$am <- as.factor(rbinom(nrow(data2), 1, 0.5))
     na_idx <- sample(1:nrow(data2), size = 10)
     data2$Age[na_idx] <- NA
-
     
-
+    
+    
     data2$Kills <- abs(data2$Kills) + 1
     
-
+    
     data2$TripDays <- abs(data2$TripDays) + 1
     
-
+    
     
     zero_idx <- sample(1:nrow(data2), 10)
     data2$Age[zero_idx] <- 0
@@ -175,7 +175,7 @@ test_that("Interp_ct and chk_ct (no failures, warnings allowed)", {
       # checking this also check the ggemmeans
       interp_ct(m)
       chk_ct(m)
-
+      
     }
     # no need check diag count if slect_Ct works diag count works
     # I test the most compcated formula should work for mix ed effect
@@ -185,6 +185,6 @@ test_that("Interp_ct and chk_ct (no failures, warnings allowed)", {
     
   })
   
-
+  
   
 })

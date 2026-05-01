@@ -2,6 +2,52 @@ library(car)
 library(glue)
 library(DHARMa)
 library(patchwork)
+#' Check Diagnostics for Count Regression Models
+#'
+#' Performs a comprehensive diagnostic check for count regression models,
+#' including Poisson, quasi-Poisson, negative binomial, and zero-inflated models.
+#'
+#' This function evaluates:
+#' \itemize{
+#'   \item Event count adequacy per predictor
+#'   \item Multicollinearity using VIF (Variance Inflation Factor)
+#'   \item Zero-inflation (when applicable)
+#'   \item Dispersion ratio diagnostics
+#'   \item Residual diagnostics (Pearson, randomized quantile residuals)
+#' }
+#'
+#' @details
+#' Zero-inflation tests are performed using simulation-based methods (DHARMa).
+#' However, these tests may fail for some model classes (e.g., \code{zeroinfl}
+#' from the \code{pscl} package) due to missing \code{simulate()} methods or
+#' incompatible model structures. In such cases, the test is automatically skipped
+#' or may error.
+#'
+#' Users are encouraged to use \code{glmmTMB} for zero-inflated models when
+#' simulation-based diagnostics are required, as it provides full support for
+#' DHARMa.
+#'
+#' @param model A fitted count regression model (e.g., Poisson, NB, ZIP, ZINB)
+#'
+#' @return Prints diagnostic summaries and returns residual diagnostic plots.
+#'
+#' @note
+#' VIF testing is simulation-based and may occasionally fail or
+#' produce unstable results depending on the model structure
+#'
+#' Therefore, failure of posisson testing does not necessarily indicate
+#' an issue with the data or model fit.
+#'
+#' @import car
+#' @import glue
+#' @import DHARMa
+#' @import patchwork
+#'
+#' @examples
+#' \dontrun{
+#' model <- glm(count ~ x1 + x2, family = poisson, data = df)
+#' chk_ct(model)
+#' }
 chk_ct <- function(model){
    
    # model family
@@ -71,17 +117,35 @@ chk_ct <- function(model){
        message("no vif reported model contains fewer than 2 terms" )
     
      }else{
-         print(performance::check_collinearity(model))
+       
+       vif_res <- tryCatch(
+         {
+           performance::check_collinearity(model)
+         },
+         error = function(e) {
+           message("VIF computation failed for ZIP/ZINB model: ", e$message)
+           return(NULL)
+         },
+         warning = function(w) {
+           message("VIF warning for ZIP/ZINB model: ", w$message)
+           invokeRestart("muffleWarning")
+         }
+       )
+       
+       if (!is.null(vif_res)) {
+         print(vif_res)
          cat(vif_report(model))
-         # car::vif(fit_ct(model$formula,model$model,family= "zinb"))
        }
+       
+    
+      }
 
      
      # Condition 2 Enough count for predictor
      y_ct <- sum(model.response(model.frame(model)))
      Threshold_count <- 10 * length(model$coefficients$count)
       
-     cat("#----------------------------Count and Zero Per Predictor Interpretation----------------#")
+     cat("#----------------------------Count and Zero Per Predictor Interpretation----------------#\n")
 
      if(y_ct>=Threshold_count){
        
@@ -146,7 +210,16 @@ chk_ct <- function(model){
     
   if(fam %in% c("glmnb","glmpoisson")){
     message("random effect plot is plotted\n")
-    print(plt_ref(model))
+    is_mixed <- grepl("\\([^()]*\\|[^()]*\\)", deparse1(formula(model)))
+    
+    if(is_mixed==FALSE){
+      
+      warning("No random effects were detected in the model formula. Please specify a random effects term (e.g., (1 | group)) or use a model without random effects.")
+    }else{
+      print(plt_ref(model))
+    }
+    
+
   }
     
     
@@ -234,7 +307,16 @@ dat <- dat |>
    mutate(r.marginal =  - y.hat)
 
 
+re <- ranef(model)
+  
+if (is.null(re) || length(re) == 0 || is.null(re$cond)) {
+  stop("plt_ref(): no random effects found in this model")
+}
+
+
+
 subject <- names(ranef(model)$cond)
+
 # random terms
 re_mat <- ranef(model)$cond[[subject]]
 re_term <- setdiff(colnames(re_mat), "(Intercept)")
