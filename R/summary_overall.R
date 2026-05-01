@@ -3,7 +3,27 @@ library(dplyr)
 #'
 #' @param data A data frame
 #' @param na.rm removing NA when calculating summaries takes on (TRUE/FALSE)
+#' This function computes a comprehensive set of summary statistics for all numeric
+#' variables in a data frame. It is designed for quick exploratory data analysis and
+#' provides both central tendency and dispersion measures, as well as missing data
+#' diagnostics.
 #'
+#' The function extracts all numeric columns and returns a tibble containing:
+#' \itemize{
+#'   \item Number of rows in the dataset
+#'   \item Number of missing values per variable
+#'   \item Minimum value
+#'   \item First quartile (25%)
+#'   \item Median
+#'   \item Mean
+#'   \item Third quartile (75%)
+#'   \item Maximum value
+#'   \item Variance
+#' }
+#' 
+#' 
+#' When ggpair == True it also displays a ggpair plot
+#' 
 #' @returns A tibble of summary statistics
 #' @export
 #'

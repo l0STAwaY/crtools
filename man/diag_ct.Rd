@@ -9,11 +9,22 @@ diag_ct(model, B = 100)
 \arguments{
 \item{model}{A fitted count model object (from fit_ct)}
 
-\item{B}{Number of bootstrap replications}
+\item{B}{Number of bootstrap replications
+
+This function returns a diagnositc that is AIC BIC and MC Logliklihood Fadden's R square for each model select the best BIC
+It also calcucates the bootstrap coeffcient as well as the normal model confidence interval. Select_ct calls this function to graph all interval together and pick the best model via BIC
+Note, that qpoisson return a table with all NA values since it does not have a liklihood and all our
+decided metrics are  liklihood based}
 }
 \value{
 A list with performance metrics, bootstrap CI, raw bootstrap draws, and model-based CI
 }
 \description{
 Model Diagnostics for Count Models
+}
+\examples{
+
+m1 <- glm(y ~ hp * vs, data = mtcars, family = poisson)
+t<- diag_ct(m1)
+
 }

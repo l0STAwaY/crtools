@@ -3,7 +3,7 @@ library(dplyr)
 library(ggplot2)
 #' Plot model-based predictions for interactions
 #'
-#' Uses ggeffects::ggemmeans to plot predicted values from count models.
+#' Uses emmeans to plot predicted values from count models.
 #' Automatically handles continuous and categorical predictors and moderators.
 #' Displays confidence intervals when available.
 #'

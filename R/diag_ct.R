@@ -6,7 +6,8 @@
 #' 
 #' This function returns a diagnositc that is AIC BIC and MC Logliklihood Fadden's R square for each model select the best BIC 
 #' It also calcucates the bootstrap coeffcient as well as the normal model confidence interval. Select_ct calls this function to graph all interval together and pick the best model via BIC
-#' 
+#' Note, that qpoisson return a table with all NA values since it does not have a liklihood and all our
+#' decided metrics are  liklihood based
 #' @examples
 #' 
 #' m1 <- glm(y ~ hp * vs, data = mtcars, family = poisson)

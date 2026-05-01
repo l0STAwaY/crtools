@@ -5,7 +5,7 @@ library(patchwork)
 #' Check Diagnostics for Count Regression Models
 #'
 #' Performs a comprehensive diagnostic check for count regression models,
-#' including Poisson, quasi-Poisson, negative binomial, and zero-inflated models.
+#' including Poisson, quasi-Poisson, negative binomial, and zero-inflated models and mixed effect models
 #'
 #' This function evaluates:
 #' \itemize{
@@ -21,7 +21,6 @@ library(patchwork)
 #' However, these tests may fail for some model classes (e.g., \code{zeroinfl}
 #' from the \code{pscl} package) due to missing \code{simulate()} methods or
 #' incompatible model structures. In such cases, the test is automatically skipped
-#' or may error.
 #'
 #' Users are encouraged to use \code{glmmTMB} for zero-inflated models when
 #' simulation-based diagnostics are required, as it provides full support for
@@ -29,7 +28,7 @@ library(patchwork)
 #'
 #' @param model A fitted count regression model (e.g., Poisson, NB, ZIP, ZINB)
 #'
-#' @return Prints diagnostic summaries and returns residual diagnostic plots.
+#' @return nothing the model only prints the diagnostics for count regression Regression and suggest
 #'
 #' @note
 #' VIF testing is simulation-based and may occasionally fail or
@@ -124,7 +123,6 @@ chk_ct <- function(model){
          },
          error = function(e) {
            message("VIF computation failed for ZIP/ZINB model: ", e$message)
-           return(NULL)
          },
          warning = function(w) {
            message("VIF warning for ZIP/ZINB model: ", w$message)
@@ -463,5 +461,5 @@ vif_report <- function(model) {
     )
   }
 
-  return(vartext2)
+  cat(vartext2)
 }

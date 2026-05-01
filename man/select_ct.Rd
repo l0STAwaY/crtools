@@ -4,7 +4,7 @@
 \alias{select_ct}
 \title{Select and Compare Count Regression Models}
 \usage{
-select_ct(formula, data, B = 100)
+select_ct(formula, data, B = 50)
 }
 \arguments{
 \item{formula}{A model formula for the count outcome (e.g., \code{y ~ x1 + x2 + offset(log(t))}).}
@@ -28,7 +28,7 @@ A list containing:
 }
 \description{
 Fits and compares multiple count regression models (Poisson, quasi-Poisson,
-negative binomial, zero-inflated Poisson, and zero-inflated negative binomial),
+negative binomial, zero-inflated Poisson, and zero-inflated negative binomial and generalized linear model for both poisson and negative binomial),
 computes diagnostics, bootstrap confidence intervals, and recommends the best model
 based on BIC.
 }
@@ -42,6 +42,8 @@ model performance, bootstrap inference, and model-based confidence intervals.
 \item Combines bootstrap confidence interval results across models for comparison.
 \item Produces a coefficient plot for the count component of all models.
 }
+
+In the case where the formula is specified with mixed effect syntax only the the mixed effectmodels glmnb and glmpoisson will be fitted to compare and select
 }
 \section{Notes}{
 

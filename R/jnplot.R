@@ -2,6 +2,7 @@
 #'
 #' Computes and visualizes the Johnson-Neyman significance region
 #' for interactions involving a continuous predictor and moderator.
+#' The modelis not implemented for ZeroInflation or effectivmodels because both don't work the interaction package
 #'
 #' @param model Fitted regression model (glm, lm, etc.)
 #' @param pred Name of focal predictor (character)

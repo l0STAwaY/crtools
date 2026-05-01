@@ -1,7 +1,7 @@
 #' Select and Compare Count Regression Models
 #'
 #' Fits and compares multiple count regression models (Poisson, quasi-Poisson,
-#' negative binomial, zero-inflated Poisson, and zero-inflated negative binomial),
+#' negative binomial, zero-inflated Poisson, and zero-inflated negative binomial and generalized linear model for both poisson and negative binomial),
 #' computes diagnostics, bootstrap confidence intervals, and recommends the best model
 #' based on BIC. 
 #'

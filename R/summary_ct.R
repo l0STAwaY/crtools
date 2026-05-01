@@ -3,7 +3,7 @@ library(dplyr)
 #' Count Response Summaries
 #' 
 #' 
-#' 
+#' @description 
 #' Computes basic summary statistics of the count response varaible (5-number summary, variance, variance/ratio,
 #' and zero proportion), optionally grouped by a variable.
 #'
@@ -24,7 +24,6 @@ library(dplyr)
 #' @export
 #'
 #' @examples
-#' 
 #' data(mpg, package = "ggplot2")
 #' 
 #' # Overall summary for the count response

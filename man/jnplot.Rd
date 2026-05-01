@@ -23,4 +23,5 @@ ggplot object
 \description{
 Computes and visualizes the Johnson-Neyman significance region
 for interactions involving a continuous predictor and moderator.
+The modelis not implemented for ZeroInflation or effectivmodels because both don't work the interaction package
 }

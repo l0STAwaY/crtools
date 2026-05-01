@@ -56,10 +56,23 @@ Interaction types supported:
 \item Factor × Factor (limited to emmeans only)
 }
 
+Factor × Factor:
+Only emmeans are shown. ggemmeansplot displays discrete group comparisons.
+
+Continuous × Factor:
+Both emmeans and emtrends are computed.
+ggemmeansplot shows how the response changes across the continuous variable by group.
+
+Continuous × Continuous:
+Both emmeans and emtrends are computed.
+One continuous variable is evaluated at mean plus or minus 1 SD (or similar representative values),
+while the other is plotted continuously by group.
+When available, a Johnson–Neyman plot is used.
+
 Johnson–Neyman plots are only produced for models and interactions
-where supported (typically non-zero-inflated models).
+where supported (only glm).
 }
 \examples{
 interp_ct(model)
-interp_ct(model, alpha = 0.01, display = FALSE)
+t<- interp_ct(model, alpha = 0.01, display = FALSE)
 }

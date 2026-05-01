@@ -17,9 +17,7 @@
 #' - Reports significance, test statistic, p-value, and CI
 #' - Returns newline-separated bullet points
 #'
-#' @examples
 #'
-#' @export
 build_emmeanscontrasts_text <- function(model, mod.emmeanscontrast, pred, moderator, alpha = 0.05){
   if (!is.data.frame(mod.emmeanscontrast)) {
     mod.emmeanscontrast <- as.data.frame(mod.emmeanscontrast)

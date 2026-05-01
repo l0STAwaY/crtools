@@ -19,9 +19,6 @@ summary_ct(data, response, group = NA, na.rm = TRUE)
 A tibble of summary statistics
 }
 \description{
-Count Response Summaries
-}
-\details{
 Computes basic summary statistics of the count response varaible (5-number summary, variance, variance/ratio,
 and zero proportion), optionally grouped by a variable.
 
@@ -30,7 +27,6 @@ even though actual data values are always integers. For variance in count data i
 For median and quantiles it is natural to see repeated or integer jumps in values
 }
 \examples{
-
 data(mpg, package = "ggplot2")
 
 # Overall summary for the count response
