@@ -16,7 +16,8 @@ Fits and compares multiple count regression models (Poisson, quasi-Poisson, nega
 
 This function returns a diagnostic that includes AIC, BIC, and McFadden’s R-squared for each model, selecting the best model based on BIC.
 
-It also calculates bootstrap coefficients as well as normal model confidence intervals. `select_ct()` calls this function to graph all intervals together and pick the best model via BIC.
+It also calculates bootstrap coefficients as well as normal model confidence intervals. `select_ct()` calls this function to graph all intervals together and pick the best model via BIC. Note, that qpoisson return a table with all NA values since it does not have a liklihood and all our
+decided metrics are  liklihood based
 
 
 ## interp_ct()
@@ -25,18 +26,14 @@ Provides a unified interpretation framework for count regression models fitted u
 interaction summaries, marginal effects tables, and marginal effects diagnostic plots.
 
 This function summarizes:
- \itemize{
- \item Main model interpretation (log-link coefficient interpretation)
- \item Emmeans-based marginal means for interactions
- \item Emtrends-based marginal slopes for interactions
- \item Pairwise contrasts for both emmeans and emtrends
- \item Diagnostic interaction plots including:
-   \itemize{
-     \item Emmeans plots
-      \item Emtrends plots      
-      \item Johnson–Neyman plots (when available)
-    }
- }
+- Main model interpretation (log-link coefficient interpretation)
+- Emmeans-based marginal means for interactions
+- Emtrends-based marginal slopes for interactions
+- Pairwise contrasts for both emmeans and emtrends
+- Diagnostic interaction plots including:
+  - Emmeans plots
+  - Emtrends plots
+  - Johnson–Neyman plots (when available)
  
 
 It supports 
@@ -88,5 +85,27 @@ Fits a variety of count regression models using a unified interface, including P
 
 ## jnplot()
 
+plots johnson-neyman plot for only glm's since interaction does not support other models
+
 Computes and visualizes the Johnson-Neyman significance regionfor interactions involving a continuous predictor and moderator.
 The function is not implemented for ZeroInflation or effect models because both don't work the interaction package
+
+
+## ggemmeansplot()
+
+Uses emmeans to plot predicted values from count models.
+Automatically handles continuous and categorical predictors and moderators.
+Displays confidence intervals when available.
+
+## All the other emmeans and emmtrends tab, contrast, tab 
+
+These are as it's names suggest, helper functions that help us graph out the emmeans emmtrends contrast and table
+
+
+## Some other notes
+Note: that emmtrends and joshnson-neyman are both on the log(response) scale due to  implmentation difficulties but the results are still meaningful
+but require careful interpretation
+
+All emmeans functions contrast and table and ggemmeansplot() are both on the response scale
+
+
