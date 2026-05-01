@@ -72,7 +72,7 @@ chk_ct <- function(model){
      
      
      # Condition 2, little to no multi-colinearity
-     cat("\n#---------------------------VIF Model and Interpretation---------------------#")
+     cat("#---------------------------VIF Model and Interpretation---------------------#\n")
      if(length(coef(model))<=2){
        message("\nno vif reported: model contains fewer than 2 terms" )
      }
