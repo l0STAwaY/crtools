@@ -33,6 +33,9 @@
 #'   \item Combines bootstrap confidence interval results across models for comparison.
 #'   \item Produces a coefficient plot for the count component of all models.
 #' }
+#' 
+#' 
+#' In the case where the formula is specified with mixed effect syntax only the the mixed effectmodels glmnb and glmpoisson will be fitted to compare and select
 #'
 #'
 #' @section Notes:
@@ -62,7 +65,8 @@ select_ct <- function(formula, data, B = 100) {
   
 
   # detect random effect terms
-  is_mixed <- grepl("\\([^()]*\\|[^()]*\\)", deparse(formula))
+  # deparse concerse formula ino string and we ase some varible ( | )
+  is_mixed <- grepl("\\([^()]*\\|[^()]*\\)", deparse1(formula))
   
 
   if (is_mixed) {
@@ -149,6 +153,11 @@ select_ct <- function(formula, data, B = 100) {
   )
 
   perf_df$model <- valid_names
+  
+  
+  # poisson alway NA
+  perf_df <- perf_df %>%
+    dplyr::filter(!(model == "qpoisson"))
   
   
 

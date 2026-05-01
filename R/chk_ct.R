@@ -19,20 +19,20 @@ chk_ct <- function(model){
      y_ct <- sum(model.response(model.frame(model)))
      Threshold <- 10 * length(coef(model))
      if(y_ct>=Threshold){
-       cat(" Total event counts is at least 10-20 events predictor variable\n")
+       cat("\nTotal event counts is at least 10-20 events predictor variable\n")
      }else{
-       cat(" Total event counts is not at least 10-20 events predictor variable\n")
+       cat("\nTotal event counts is not at least 10-20 events predictor variable\n")
      }
      
      
      
      # Condition 2, little to no multi-colinearity
-     cat("#---------------------------VIF Model and Interpretation---------------------#")
+     cat("\n#---------------------------VIF Model and Interpretation---------------------#")
      if(length(coef(model))<=2){
-       message("no vif reported: model contains fewer than 2 terms" )
+       message("\nno vif reported: model contains fewer than 2 terms" )
      }
      else{
-       print(performance::check_collinearity(model))
+       performance::check_collinearity(model)
        cat("\n")
        cat(vif_report(model))
      }
@@ -40,9 +40,23 @@ chk_ct <- function(model){
      # Test Zero Inflation
      if (fam %in% c("qpoisson")){
        message("testZeroInflation does not support qpoisson family, no zero inflation test reported")
-     } else{ 
+     } else if(fam %in% c("zip","zinb")){
+         message("testZeroInflation does any Zero inflation model family, no zero inflation test reported")
+     }
+     else{ 
        message("Zero Inflation Simulation Plot is Plotted" )
        testZeroInflation(model)
+       zi_test <- testZeroInflation(model)
+       pval <- zi_test$p.value
+      
+       if (pval < 0.05) {
+         cat("\nZero-inflation test is significant (p < ", 0.05,
+             "). Evidence suggests excess zeros are present; consider ZIP or ZINB models.\n", sep = "")
+         
+       } else {
+         cat("\nZero-inflation test is not significant (p >= ", 0.05,
+             "). No strong evidence of excess zeros; standard count models may be adequate.\n", sep = "")
+       }
      }
      
    }

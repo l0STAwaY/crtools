@@ -2,8 +2,16 @@
 #'
 #' @param model A fitted count model object (from fit_ct)
 #' @param B Number of bootstrap replications
+#' 
+#' 
+#' @examples
+#' 
+#' m1 <- glm(y ~ hp * vs, data = mtcars, family = poisson)
+#' t<- diag_ct(m1)
 #'
 #' @returns A list with performance metrics, bootstrap CI, raw bootstrap draws, and model-based CI
+#' 
+#' 
 #' @import performance
 #' @export
   diag_ct <- function(model, B = 100){
@@ -82,7 +90,6 @@ ct_performance_table <- function(model){
   
   data.frame(
     AIC = AIC(model),
-    AICc = AIC(model),
     BIC = BIC(model),
     logLik = ll_full,
     R2_mcfadden = r2_mcfadden

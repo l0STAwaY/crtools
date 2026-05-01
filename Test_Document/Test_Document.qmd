@@ -200,6 +200,10 @@ ggemmeansplot(m18, pred = "hp", moderator = "mpg")
 m17_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data= data3, family = "glmpoisson")
 ggemmeansplot(m17_off, pred = "hp", moderator = "mpg")
 
+m17_off_log <- fit_ct(y ~ hp * log(mpg) + offset(log(exposure)), data= data3, family = "glmpoisson")
+m17_log <- fit_ct(y ~ hp * log(mpg), data= data3, family = "glmpoisson")
+
+
 m18_off <- fit_ct(y ~ hp * mpg + offset(log(exposure)), data= data3, family = "glmnb")
 ggemmeansplot(m18_off, pred = "hp", moderator = "mpg")
 
@@ -252,6 +256,7 @@ m20 <- fit_ct(y ~ vs * am + (1 | gear), data= data3, family = "glmnb")
 
 m19_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data= data3, family = "glmpoisson")
 
+
 m20_off <- fit_ct(y ~ vs * am + (1 | gear) + offset(log(exposure)), data= data3, family = "glmnb")
 
 # cat cont
@@ -264,13 +269,10 @@ m21_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data= data3,
 
 m22_off <- fit_ct(y ~ hp * vs + (1 | gear) + offset(log(exposure)), data= data3, family = "glmnb")
 
+m22_off_log <- fit_ct(y ~ log(hp) * vs + (1 | gear) + offset(log(exposure)), data= data3, family = "glmnb")
 
 
 
-
-
-
-t<-interp_ct(model2)
 
 ```
 
@@ -398,6 +400,8 @@ t_m17_off <- interp_ct(m17_off)
 t_m18_off <- interp_ct(m18_off)
 
 
+t_m17_off_log <- interp_ct(m17_off_log)
+t_m17_log <- interp_ct(m17_log)
 #===========================
 # cat x categorical poisson
 #===========================
@@ -418,7 +422,7 @@ t_m22 <- interp_ct(m22)
 
 t_m21_off <- interp_ct(m21_off)
 t_m22_off <- interp_ct(m22_off)
-
+t_m22_off_log <- interp_ct(m22_off_log)
 
 
 
@@ -916,6 +920,7 @@ chk_ct(m11)
 chk_ct(m12)
 chk_ct(m13)
 
+
 chk_ct(m14)
 
 chk_ct(m10_off)
@@ -962,4 +967,23 @@ chk_ct(m21_off)
 
 t<- select_ct(formula(m10_off), data = data2)
 t<- select_ct(formula(m22), data = data2)
+#===========================
+# example of all model diagnostic every model beside pousson have a diagnositc
+# use diag ct idnvidually if want specific diag_ct
+#===========================
+
+t$diagnostics
+
+# for example
+
+
+diag_ct(m10_off)
+
+```
+
+```{r}
+# check diag count
+
+
+
 ```

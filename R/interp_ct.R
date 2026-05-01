@@ -22,6 +22,9 @@
 #'       \item Johnson–Neyman plots (when available)
 #'     }
 #' }
+#' 
+#' 
+#' 
 #'
 #' Interaction types supported:
 #' \itemize{
@@ -111,11 +114,11 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
   
   
   # Dispersion ratio
-  pearson_ratio <- sum(residuals(model, type = "pearson")^2) / model$df.residual
+  pearson.ratio <- sum(residuals(model, type = "pearson")^2) / df.residual(model)
   
   disp_msg <- paste0(
-    "\U2022 Pearson dispersion ratio = ", round(pearson_ratio, 4),
-    ifelse(pearson_ratio > 1.5,
+    "\U2022 Pearson dispersion ratio = ", round(pearson.ratio, 4),
+    ifelse(pearson.ratio > 1.5,
            ", Disepersion Ratio greater than 1.5 suggesting overdispersion. Use chk_count for furthur model condition details.",
            ", Disepersion Ratio less than 1.5 indicating no strong overdispersion. Use chk_count for furthur model condition details.")
   )
@@ -174,7 +177,9 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
   
   # filter out the intercept and what remains is only the count coeffcients
   if(fam %in% c("glmnb","glmpoisson")){
-    coefs <- fixef(model)$cond
+    coefs <- fixef(model)$cond[names( fixef(model)$cond)!= "(Intercept)"]
+  }else if(fam %in% c("zip", "zinb")){
+    coefs <- coefs[names(coefs) != "count_(Intercept)"]
   }else{
     coefs <- coefs[names(coefs) != "(Intercept)"]
   }
@@ -268,8 +273,15 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
     for (i in interactions) {
       
       
-      # variable for two way interaction
+  
+        
       vars <- strsplit(i, ":")[[1]]
+      
+
+      
+      vars <- sub("^log\\((.*)\\)$", "\\1", vars)
+      
+
 
 
     
@@ -605,9 +617,11 @@ interp_ct <- function(model,alpha=0.05,display=TRUE){
   }
   
   
+  model_result <- summary(model)
   
-  
-
+ cat("----------------------Main Model Results-----------------\n")
+ print(model_result)
+ cat("\n")
 
   
   text <- paste0(
