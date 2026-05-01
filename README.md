@@ -97,7 +97,7 @@ Uses emmeans to plot predicted values from count models.
 Automatically handles continuous and categorical predictors and moderators.
 Displays confidence intervals when available.
 
-## All the other emmeans and emmtrends tab, contrast, tab 
+## All the other emmeans and emmtrends tab, contrast
 
 These are as it's names suggest, helper functions that help us graph out the emmeans emmtrends contrast and table
 
